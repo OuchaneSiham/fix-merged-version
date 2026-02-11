@@ -36,14 +36,6 @@ function GamePage() {
     return <div>Loading Game State...</div>;
   }
 
-  if (gameState.status === "WAITING") {
-    if (gameState.you === "SPECTATOR") {
-      return <GameWaiting spectator={true} leaveRoom={leaveRoom}/>
-    }
-    return (
-      <GameWaiting sendReady={sendReady} spectator={false} leaveRoom={leaveRoom}/>
-    )
-  }
   if (gameState.status === "RUNNING") {
     if (gameState.you === "SPECTATOR") {
       return (
@@ -75,7 +67,7 @@ function GamePage() {
 
   if (gameState.you === "SPECTATOR") {
     if (gameState.status === "WAITING" || gameState.status === "WAITING_OPPONENT") {
-      return <GameWaiting sendReady={sendReady} spectator leaveRoom={leaveRoom} />;
+      return <GameWaiting sendReady={sendReady} spectator={true} leaveRoom={leaveRoom} />;
     }
     if (gameState.status === "PAUSED") {
       return <GamePaused text="Game paused" />;

@@ -17,7 +17,7 @@ const GameGateway = require("./gateway/GameGateway");
 
 fastify.register(cors, {
     hook: 'preHandler',
-    origin: true,
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 });
