@@ -48,7 +48,7 @@ constructor(server) {
 
     let payload;
     try {
-      payload = jwt.verify(token, process.env.JWT_SECRET);
+      payload = jwt.verify(token, process.env.JWT_KEY);
     } catch {
       socket.send(
         JSON.stringify({
