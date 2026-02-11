@@ -9,11 +9,11 @@ import GamePaused from "./components/game/GamePaused";
 import GameSpectator from "./components/game/GameSpectator";
 import useGameState from "./hooks/game/useGameState";
 import { useGameSocket } from "./hooks/game/useGameSocket";
-
+// Beta#alpha#1337
 function GamePage() {
-        const [roomId, setRoomId] = useState(() => {
-        return sessionStorage.getItem("roomId") || "lobby-1"; 
-        });
+  const [roomId, setRoomId] = useState(() => {
+    return sessionStorage.getItem("roomId") || "lobby-1";
+  });
 
   const handleSelectRoom = (id) => {
     setRoomId(id);
@@ -22,6 +22,7 @@ function GamePage() {
 
   const { wsRef, connected, leaveRoom } = useGameSocket(roomId, setRoomId);
   const { gameState, sendReady } = useGameState(wsRef, connected);
+  console.log("CONNECTED: ",gameState);
 
   if (!roomId) {
     return <RoomPage onSelectRoom={handleSelectRoom} />;
@@ -35,6 +36,14 @@ function GamePage() {
     return <div>Loading Game State...</div>;
   }
 
+  if (gameState.status === "WAITING") {
+    if (gameState.you === "SPECTATOR") {
+      return <GameWaiting spectator={true} leaveRoom={leaveRoom}/>
+    }
+    return (
+      <GameWaiting sendReady={sendReady} spectator={false} leaveRoom={leaveRoom}/>
+    )
+  }
   if (gameState.status === "RUNNING") {
     if (gameState.you === "SPECTATOR") {
       return (
@@ -51,13 +60,13 @@ function GamePage() {
           Pong
         </h1>
         <button
-        onClick={() => {
+          onClick={() => {
             leaveRoom();
             navigate("/profile");
-        }}
-        className="mb-4 px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg font-bold"
+          }}
+          className="mb-4 px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg font-bold"
         >
-        Back to Profile
+          Back to Profile
         </button>
         <Game gameState={gameState} wsRef={wsRef} />
       </div>
@@ -78,9 +87,9 @@ function GamePage() {
   }
 
   const me = gameState[gameState.you];
-if (!me && gameState.you !== "SPECTATOR") {
-  return <div className="text-white">Initializing your paddle...</div>;
-}
+  if (!me && gameState.you !== "SPECTATOR") {
+    return <div className="text-white">Initializing your paddle...</div>;
+  }
   const opponent = gameState.you === "player1" ? gameState.player2 : gameState.player1;
   const opponentReady = opponent?.ready || gameState.aiEnabled;
 

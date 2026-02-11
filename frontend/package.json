@@ -11,12 +11,14 @@
   },
   "dependencies": {
     "@react-oauth/google": "^0.13.4",
+    "@tailwindcss/vite": "^4.1.18",
     "axios": "^1.13.2",
     "prop-types": "^15.8.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.12.0",
     "socket.io-client": "^4.8.3",
+    "tailwindcss": "^4.1.18",
     "uuid": "^11.0.3"
   },
   "devDependencies": {
