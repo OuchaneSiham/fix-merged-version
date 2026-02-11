@@ -1,0 +1,252 @@
+const Ball = require("./Ball");
+const { GameState, GameStatus } = require("./GameState");
+const InputHandler = require("./InputHandler");
+const Paddle = require("./Paddle");
+const Player = require("./Player");
+
+class GameEngine {
+  fieldWidth = 800;
+  fieldHeight = 600;
+  ball;
+  player1;
+  player2;
+  state;
+  disconnectedClient;
+  inputHandler;
+  aiTimeout = null;
+  isAIEnabled = false;
+  aiDifficulty = "normal";
+  aiTimer = 0;
+  constructor() {
+    this.ball = new Ball(this.fieldWidth / 2, this.fieldHeight / 2, 300);
+    this.player1 = new Player(
+      "player1",
+      new Paddle(0, this.fieldHeight / 2 - 50, 10, 100, 500),
+    );
+    this.player2 = new Player(
+      "player2",
+      new Paddle(this.fieldWidth - 10, this.fieldHeight / 2 - 50, 10, 100, 500),
+    );
+    this.state = new GameState();
+    this.inputHandler = new InputHandler(this.player1, this.player2);
+    this.disconnectedClient = null;
+  }
+  checkScore() {
+    const score1 = this.player1.getPlayerScore();
+    const score2 = this.player2.getPlayerScore();
+    if (this.ball.getState().x + this.ball.getState().radius < 0) {
+      this.player2.incrementScore();
+      this.ball.resetSpeed(300);
+      this.ball.reset();
+    }
+    if (
+      this.ball.getState().x - this.ball.getState().radius >
+      this.fieldWidth
+    ) {
+      this.player1.incrementScore();
+      this.ball.resetSpeed(300);
+      this.ball.reset();
+    }
+    if (score1 >= this.state.maxScore) {
+      this.endGame("player1");
+      return;
+    }
+    if (score2 >= this.state.maxScore) {
+      this.endGame("player2");
+      return;
+    }
+  }
+  update(deltaTime) {
+    if (this.state.status !== GameStatus.RUNNING) return;
+    this.updatePlayers(deltaTime);
+    this.ball.update(deltaTime);
+    if (this.isAIEnabled) {
+      this.updateAI(deltaTime);
+    }
+    this.checkWallCollisions();
+    this.checkPaddleCollisions();
+    this.checkScore();
+  }
+  updatePlayers(deltaTime) {
+    if (this.player1.input.up) {
+      const paddle = this.player1.getPlayerPaddle();
+      if (paddle.getBounds().y > 0) {
+        paddle.moveUp(deltaTime);
+      }
+    }
+    if (this.player1.input.down) {
+      const paddle = this.player1.getPlayerPaddle();
+      if (paddle.getBounds().y + paddle.getBounds().height < this.fieldHeight) {
+        paddle.moveDown(deltaTime);
+      }
+    }
+    if (this.player2.input.up) {
+      const paddle = this.player2.getPlayerPaddle();
+      if (paddle.getBounds().y > 0) {
+        paddle.moveUp(deltaTime);
+      }
+    }
+    if (this.player2.input.down) {
+      const paddle = this.player2.getPlayerPaddle();
+      if (paddle.getBounds().y + paddle.getBounds().height < this.fieldHeight) {
+        // console.log("PLAYER 2 MOVE_DOWN", this.player2.input.down);
+        paddle.moveDown(deltaTime);
+      }
+    }
+  }
+  // Call this method to set the control
+  // of the player to AI
+  enableAI() {
+    this.isAIEnabled = true;
+    this.player2.input.up = false;
+    this.player2.input.down = false;
+  }
+  disableAI() {
+    this.isAIEnabled = false;
+  }
+  updateAI(deltaTime) {
+    const paddle = this.player2.getPlayerPaddle();
+    const ball = this.ball.getState();
+    const paddleCenter = paddle.y + paddle.height / 2;
+    const tolerance = 20;
+    const aiSpeed = 0.8; 
+    const reactionTime = 0.10;
+    const maxError = 25;
+    this.aiTimer += deltaTime;
+    if (this.aiTimer < reactionTime) {
+      return;
+    }
+    this.aiTimer = 0;
+
+    let targetY;
+    if (this.ball.getVelocity().vx > 0) {
+      const error = Math.random() - 0.5 * maxError;
+      targetY = ball.y + error;
+    } else {
+      targetY = this.fieldHeight / 2;
+    }
+    if (targetY > paddleCenter + tolerance) {
+      if (paddle.getBounds().y + paddle.getBounds().height < this.fieldHeight) {
+        paddle.moveDown(deltaTime * aiSpeed);
+      }
+    } else if (targetY < paddleCenter - tolerance) {
+      if (paddle.getBounds().y > 0) {
+        paddle.moveUp(deltaTime * aiSpeed);
+      }
+    }
+  }
+  touchPaddle(paddle) {
+    const radius = this.ball.getState().radius;
+    const ball = this.ball.getState();
+    const pad = paddle.getBounds();
+    return (
+      ball.x + radius >= pad.x &&
+      ball.x - radius <= pad.x + pad.width &&
+      ball.y + radius >= pad.y &&
+      ball.y - radius <= pad.y + pad.height
+    );
+  }
+  checkWallCollisions() {
+    const radius = this.ball.getState().radius;
+    if (
+      this.ball.getState().y - radius <= 0 ||
+      this.ball.getState().y + radius >= this.fieldHeight
+    ) {
+      console.log("Wall collision detected at y =", this.ball.getState().y);
+      this.ball.bounceY();
+    }
+  }
+  checkPaddleCollisions() {
+    const leftPaddle = this.player1.getPlayerPaddle();
+    const rightPaddle = this.player2.getPlayerPaddle();
+    if (this.touchPaddle(leftPaddle) && this.ball.getVelocity().vx < 0) {
+      this.ball.bounceX();
+      this.ball.setSpeed(1.05);
+      this.ball.setPosition(
+        leftPaddle.getBounds().x +
+          leftPaddle.getBounds().width +
+          this.ball.getState().radius,
+      );
+    }
+    if (this.touchPaddle(rightPaddle) && this.ball.getVelocity().vx > 0) {
+      this.ball.bounceX();
+      this.ball.setSpeed(1.05);
+      this.ball.setPosition(
+        rightPaddle.getBounds().x - this.ball.getState().radius,
+      );
+    }
+  }
+  getSnapshot() {
+    return {
+      ball: this.ball.getState(),
+      player1: {
+        x: this.player1.getPlayerPaddle().getBounds().x,
+        y: this.player1.getPlayerPaddle().getBounds().y,
+        width: this.player1.getPlayerPaddle().getBounds().width,
+        height: this.player1.getPlayerPaddle().getBounds().height,
+        score: this.player1.getPlayerScore(),
+      },
+      player2: {
+        x: this.player2.getPlayerPaddle().getBounds().x,
+        y: this.player2.getPlayerPaddle().getBounds().y,
+        width: this.player1.getPlayerPaddle().getBounds().width,
+        height: this.player1.getPlayerPaddle().getBounds().height,
+        score: this.player2.getPlayerScore(),
+      },
+      field: { width: this.fieldWidth, height: this.fieldHeight },
+      status: GameStatus[this.state.status],
+      winnerId: this.state.winnerId ?? null,
+    };
+  }
+  handlePlayerInput(playerId, action) {
+    const data = this.getSnapshot();
+    this.inputHandler.handleInput(playerId, action, data);
+  }
+  handlePlayerInputStop(playerId) {
+    const player =
+      playerId === this.player1.getPlayerId() ? this.player1 : this.player2;
+    if (!player) return;
+    player.setInput("MOVE_UP", false);
+    player.setInput("MOVE_DOWN", false);
+  }
+  endGame(winnerId) {
+    if (this.state.status === GameStatus.FINISHED) return;
+    this.state.finish();
+    this.state.winnerId = winnerId;
+    this.disconnectedClient = null;
+    if (this.isAIEnabled) this.disableAI();
+  }
+  onPlayerDisconnected(playerId) {
+    if (
+      this.state.status !== GameStatus.RUNNING &&
+      this.state.status !== GameStatus.WAITING_OPPONENT
+    )
+      return;
+    this.state.status = GameStatus.PAUSED;
+    console.log("On player disconnected:", playerId);
+    setTimeout(() => {
+      if (
+        this.disconnectedClient &&
+        this.disconnectedClient.getClientId() === playerId &&
+        this.disconnectedClient.isDisconnected() &&
+        this.state.status !== GameStatus.FINISHED
+      ) {
+        const winnerId = playerId === "player1" ? "player2" : "player1";
+        this.endGame(winnerId);
+      }
+    }, 5000);
+  }
+  startGame() {
+    this.state.status = GameStatus.RUNNING;
+  }
+  resetGame() {
+    this.state.status = GameStatus.WAITING;
+    this.player1.score = 0;
+    this.player2.score = 0;
+    this.ball.reset();
+    this.player1.resetPlayer(this.fieldHeight / 2 - 50);
+    this.player2.resetPlayer(this.fieldHeight / 2 - 50);
+  }
+}
+module.exports = GameEngine;
+
