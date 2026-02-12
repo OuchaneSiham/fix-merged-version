@@ -181,7 +181,10 @@ class GameGateway {
         engine.disableAI();
       }
       console.log("AI", playerCount, engine.aiTimeout);
-      if (playerCount < 2 && !engine.aiTimeout ) {
+      if (
+        engine.state.status === GameStatus.WAITING_OPPONENT &&
+        !engine.aiTimeout
+      ) {
         engine.aiTimeout = setTimeout(() => {
           const currentPlayers = [...clients.values()].filter(
             (c) => c.getRole() === "PLAYER" && c.getIsReady(),
@@ -316,6 +319,34 @@ class GameGateway {
       engine.update(deltaTime);
       this.broadcastSnapshot(roomId);
 
+      // When a game is finished,
+      // check if there at least one player
+      // and if he is ready and after 1 minutes
+      // introduce AI opponent if no one has joined
+      // the room.
+      const clients = room.clients;
+      if (
+        engine.state.status === GameStatus.WAITING_OPPONENT &&
+        !engine.aiTimeout
+      ) {
+        engine.aiTimeout = setTimeout(() => {
+          const currentPlayers = [...clients.values()].filter(
+            (c) => c.getRole() === "PLAYER" && c.getIsReady(),
+          ).length;
+          if (currentPlayers === 1) {
+            console.log("No opponent found enabling AI in room", roomId);
+            engine.enableAI();
+            room.aiAdded = true; // Denied access to other clients
+            console.log("AI added to room", roomId);
+            this.checkGameStart(roomId);
+          }
+          engine.aiTimeout = null;
+        }, 60000);
+      }
+      // resetScheduled is used to avoid
+      // multiple resets being scheduled
+      // when the game is finished but clients
+      // haven't left the room yet
       if (engine.state.status === GameStatus.FINISHED && !resetScheduled) {
         resetScheduled = true;
         setTimeout(() => {
