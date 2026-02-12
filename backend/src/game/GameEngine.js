@@ -80,13 +80,13 @@ class GameEngine {
         paddle.moveDown(deltaTime);
       }
     }
-    if (this.player2.input.up) {
+    if (this.player2.input.up && !this.isAIEnabled) {
       const paddle = this.player2.getPlayerPaddle();
       if (paddle.getBounds().y > 0) {
         paddle.moveUp(deltaTime);
       }
     }
-    if (this.player2.input.down) {
+    if (this.player2.input.down && !this.isAIEnabled) {
       const paddle = this.player2.getPlayerPaddle();
       if (paddle.getBounds().y + paddle.getBounds().height < this.fieldHeight) {
         // console.log("PLAYER 2 MOVE_DOWN", this.player2.input.down);
@@ -210,7 +210,7 @@ class GameEngine {
     player.setInput("MOVE_DOWN", false);
   }
   endGame(winnerId) {
-    if (this.state.status === GameStatus.FINISHED) return;
+    // if (this.state.status === GameStatus.FINISHED) return;
     this.state.finish();
     this.state.winnerId = winnerId;
     this.disconnectedClient = null;
@@ -240,7 +240,8 @@ class GameEngine {
     this.state.status = GameStatus.RUNNING;
   }
   resetGame() {
-    this.state.status = GameStatus.WAITING;
+    this.state.status = GameStatus.WAITING;4
+    this.state.winnerId = null;
     this.player1.score = 0;
     this.player2.score = 0;
     this.ball.reset();

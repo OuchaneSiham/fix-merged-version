@@ -37,6 +37,7 @@
 
 // }
 import { useEffect, useState } from "react";
+import { ClientMessageType } from "../../messages/messages.js";
 
 export default function useGameState(wsRef, connected) {
   const [gameState, setGameState] = useState(null);
@@ -83,13 +84,13 @@ export default function useGameState(wsRef, connected) {
     return () => {
       ws.removeEventListener("message", handleMessage);
     };
-  }, [connected, wsRef]);
+  }, [connected]);
 
   const sendReady = () => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(
         JSON.stringify({
-          type: "PLAYER_READY",
+          type: ClientMessageType.PLAYER_READY,
         })
       );
       console.log("📤 Sent PLAYER_READY");

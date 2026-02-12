@@ -1,6 +1,9 @@
 const jwt = require("jsonwebtoken");
 const { GameStatus } = require("../game/GameState");
-const { ClientMessageType, ServerMessageType } = require("../messages/messages");
+const {
+  ClientMessageType,
+  ServerMessageType,
+} = require("../messages/messages");
 const { WebSocketServer } = require("ws");
 const GameClient = require("../game/GameClient");
 const dotenv = require("dotenv");
@@ -16,23 +19,23 @@ class GameGateway {
   frameIntervals = new Map();
 
   // backend/src/gateway/GameGateway.js
-constructor(server) {
-  // Remove the trailing slash from the path
-  this.wss = new WebSocketServer({ 
-    server, 
-    path: '/game' 
-  }); 
-  
-  this.wss.on("connection", (socket, request) => {
-    this.handleConnection(socket, request);
-  });
-  console.log(`✅ GameGateway attached to main server on /game`);
-}
+  constructor(server) {
+    // Remove the trailing slash from the path
+    this.wss = new WebSocketServer({
+      server,
+      path: "/game",
+    });
+
+    this.wss.on("connection", (socket, request) => {
+      this.handleConnection(socket, request);
+    });
+    console.log(`✅ GameGateway attached to main server on /game`);
+  }
   // ... rest of the code stays the same
 
   handleConnection(socket, request) {
     const url = request.url;
-    const params = new URLSearchParams(url?.split("?")[1]);
+    const params = new URLSearchParams((url || "")?.split("?")[1] || "");
     const token = params.get("token");
     const roomId = params.get("roomId") || "default-room";
     if (!token) {
@@ -61,8 +64,8 @@ constructor(server) {
     }
 
     // ✅ Extract real user info from JWT
-const userId = payload.id || payload.sub;
-const username = payload.username || payload.email || `user_${userId}`;
+    const userId = payload.id || payload.sub;
+    const username = payload.username || payload.email || `user_${userId}`;
 
     // Create room if it doesn't exist
     if (!this.rooms.has(roomId)) {
@@ -159,8 +162,15 @@ const username = payload.username || payload.email || `user_${userId}`;
       return;
     }
     if (playerCount < 2) {
-const playerId = playerCount === 0 ? "player1" : "player2";
-newClient = new GameClient(userId, socket, "PLAYER", roomId, playerId, username);
+      const playerId = playerCount === 0 ? "player1" : "player2";
+      newClient = new GameClient(
+        userId,
+        socket,
+        "PLAYER",
+        roomId,
+        playerId,
+        username,
+      );
       clients.set(socket, newClient);
       socket.send(
         JSON.stringify({ type: ServerMessageType.ASSIGN_ID, playerId }),
@@ -171,10 +181,10 @@ newClient = new GameClient(userId, socket, "PLAYER", roomId, playerId, username)
         engine.disableAI();
       }
       console.log("AI", playerCount, engine.aiTimeout);
-      if (playerCount < 2 && !engine.aiTimeout) {
+      if (playerCount < 2 && !engine.aiTimeout ) {
         engine.aiTimeout = setTimeout(() => {
           const currentPlayers = [...clients.values()].filter(
-            (c) => c.getRole() === "PLAYER",
+            (c) => c.getRole() === "PLAYER" && c.getIsReady(),
           ).length;
           if (currentPlayers === 1) {
             console.log("No opponent found enabling AI in room", roomId);
@@ -187,7 +197,14 @@ newClient = new GameClient(userId, socket, "PLAYER", roomId, playerId, username)
         }, 60000);
       }
     } else {
-      newClient = new GameClient(userId, socket, "SPECTATOR", roomId, undefined, username);
+      newClient = new GameClient(
+        userId,
+        socket,
+        "SPECTATOR",
+        roomId,
+        undefined,
+        username,
+      );
       clients.set(socket, newClient);
     }
     socket.send(
@@ -359,4 +376,4 @@ newClient = new GameClient(userId, socket, "PLAYER", roomId, playerId, username)
 }
 
 // export default GameGateway;
-module.exports = GameGateway
+module.exports = GameGateway;

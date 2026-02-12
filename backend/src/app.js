@@ -66,4 +66,15 @@ const start = async () => {
     }
 };
 
+// When refreshing the page on /game 
+// the frontend will try to connect to ws or wss:localhost:8281/game 
+// the server has no HTTP route for /game but it has a WS route for /game
+// so the browser will make an HTTP request (GET) /game which will return 404,
+// so to solve this we can add a simple HTTP route for /game that just returns 200 OK,
+// this way the WS upgrade request will succeed and the WebSocket connection will be established.
+// A websocket connection starts with an HTTP request that includes an "Upgrade" header.
+// A WebSocket route is different from an HTTP route.
+fastify.get('/game', (req, res) => {
+    res.status(200).send('WebSocket endpoint for game connections');
+});
 start();

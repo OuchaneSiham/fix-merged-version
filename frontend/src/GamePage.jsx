@@ -12,7 +12,7 @@ import { useGameSocket } from "./hooks/game/useGameSocket";
 // Beta#alpha#1337
 function GamePage() {
   const [roomId, setRoomId] = useState(() => {
-    return sessionStorage.getItem("roomId") || "lobby-1";
+    return sessionStorage.getItem("roomId") || null;
   });
 
   const handleSelectRoom = (id) => {
@@ -22,9 +22,11 @@ function GamePage() {
 
   const { wsRef, connected, leaveRoom } = useGameSocket(roomId, setRoomId);
   const { gameState, sendReady } = useGameState(wsRef, connected);
-  console.log("CONNECTED: ",gameState);
 
+//   console.log("Current roomId:", roomId);
+//   console.log("Game state:", gameState);
   if (!roomId) {
+    console.log("No room selected, showing RoomPage");
     return <RoomPage onSelectRoom={handleSelectRoom} />;
   }
 
