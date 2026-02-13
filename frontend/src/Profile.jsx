@@ -239,7 +239,37 @@ function Profile() {
     fetchPending();
     fetchFriends();
   }, [navigate]);
+useEffect(() => {
+  if (!socket.connected) {
+    socket.connect();
+  }
+  socket.on("friend:request_received", (data) => {
+    console.log("📬 New friend request from:", data);
+    fetchPending();
+  });
+  socket.on("friend:request_accepted", (data) => {
+    console.log("✅ Friend request accepted:", data);
+    fetchFriends();
+  });
+  socket.on("user:online", ({ userId }) => {
+    setFriends(prev => prev.map(f => 
+      f.id === userId ? { ...f, isOnline: true } : f
+    ));
+  });
 
+  socket.on("user:offline", ({ userId }) => {
+    setFriends(prev => prev.map(f => 
+      f.id === userId ? { ...f, isOnline: false } : f
+    ));
+  });
+
+  return () => {
+    socket.off("friend:request_received");
+    socket.off("friend:request_accepted");
+    socket.off("user:online");
+    socket.off("user:offline");
+  };
+}, []);
   if (!userData) return <h1>Loading...</h1>;
 
   return (

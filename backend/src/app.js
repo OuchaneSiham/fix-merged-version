@@ -1,3 +1,4 @@
+
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 const cors = require('@fastify/cors');
@@ -28,14 +29,13 @@ fastify.register(static, {
 });
 
 fastify.register(jwtw);
-fastify.register(userRoutes, { prefix: "/api/v1/users" });
-
-// ✅ Create instances but DON'T initialize Socket.IO yet
 const socketServer = new SocketServer();
 const chatGateway = new ChatGateway(socketServer);
 const chatService = new ChatService(prisma, chatGateway);
 
-// ✅ Register chat routes (Socket.IO not needed for route registration)
+fastify.decorate('socketServer', socketServer);
+fastify.register(userRoutes, { prefix: "/api/v1/users" });
+
 fastify.register(async (instance) => {
     instance.register(chatController(chatService));
 }, { prefix: "/api/v1/chat" });

@@ -369,7 +369,20 @@ fastify.post("/google-auth", async function (request, reply) {
                 addresseeId: targetId,
             }
         });
-        
+        const io = fastify.socketServer.getIO();
+        const targetSocketId = fastify.socketServer.getSocketIdFromUserId(targetId);
+
+            if (targetSocketId) {
+                const requester = await prisma.user.findUnique({
+                    where: { id: userId },
+                    select: { id: true, username: true, avatar: true }
+                });
+                
+                io.to(targetSocketId).emit("friend:request_received", {
+                    friendshipId: create_f.id,
+                    requester: requester
+                });
+            }
         reply.status(201).send({
             message: "Friend request sent successfully",
             friendship: create_f
@@ -433,6 +446,20 @@ fastify.post("/google-auth", async function (request, reply) {
                 where:{id:rowId},
                 data:{status: "accepted"}
             });
+            const io = fastify.socketServer.getIO();
+            const requesterSocketId = fastify.socketServer.getSocketIdFromUserId(checkFrienship.requesterId);
+
+            if (requesterSocketId) {
+                const accepter = await prisma.user.findUnique({
+                    where: { id: receiverId },
+                    select: { id: true, username: true, avatar: true, isOnline: true }
+                });
+                
+                io.to(requesterSocketId).emit("friend:request_accepted", {
+                    friendshipId: rowId,
+                    friend: accepter
+                });
+            }
             reply.status(200).send({error: "the request is accepted!"});
         }
 catch(err) { 
