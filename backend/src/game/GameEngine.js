@@ -220,14 +220,16 @@ class GameEngine {
     const players = [...roomClients.values()].filter(
       (c) => c.getRole() === "PLAYER"
     );
-
+    const disconnectedPlayers = players.filter(
+      (p) => p.isDisconnected()
+    )
     if (this.state.status === GameStatus.WAITING_OPPONENT) {
-      if (players.length === 2) {
+      if (players.length === 2 && this.disconnectedClient) {
         setTimeout(() => {
           this.state.status = GameStatus.WAITING;
           players.forEach(
             (p) => p.setIsReady(false)
-          )
+          );
         }, 180000)
       }
       return;

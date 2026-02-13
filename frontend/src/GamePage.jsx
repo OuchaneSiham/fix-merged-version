@@ -25,8 +25,8 @@ function GamePage() {
   const { wsRef, connected, leaveRoom } = useGameSocket(roomId, setRoomId);
   const { gameState, sendReady } = useGameState(wsRef, connected);
 
-//   console.log("Current roomId:", roomId);
-//   console.log("Game state:", gameState);
+  //   console.log("Current roomId:", roomId);
+  //   console.log("Game state:", gameState);
   if (!roomId) {
     console.log("No room selected, showing RoomPage");
     return <RoomPage onSelectRoom={handleSelectRoom} />;
@@ -56,13 +56,10 @@ function GamePage() {
           Pong
         </h1>
         <button
-          onClick={() => {
-            leaveRoom();
-            navigate("/profile");
-          }}
+          onClick={leaveRoom}
           className="mb-4 px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg font-bold"
         >
-          Back to Profile
+          Quit Room
         </button>
         <Game gameState={gameState} wsRef={wsRef} />
       </div>
