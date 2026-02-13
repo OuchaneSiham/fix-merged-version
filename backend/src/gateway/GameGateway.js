@@ -34,11 +34,12 @@ class GameGateway {
   // ... rest of the code stays the same
 
   handleConnection(socket, request) {
-    console.log("CONNECTING CLIENT");
     const url = request.url;
     const params = new URLSearchParams((url || "")?.split("?")[1] || "");
     const token = params.get("token");
-    const roomId = params.get("roomId") || "default-room";
+    // const roomId = params.get("roomId") || "default-room";
+    const roomId = params.get("roomId");
+
     if (!token) {
       socket.send(
         JSON.stringify({
@@ -89,13 +90,10 @@ class GameGateway {
     const playersDisconnected = [...clients.values()].filter(
       (c) => c.getRole() === "PLAYER" && c.isDisconnected(),
     );
-    if (playersDisconnected.length === 2) {
-      // [...clients.values()].forEach((p) => {
-      //   if (p.getClientId() !== existingClient.getClientId()) {
-      //     p.setRole("SPECTATOR");
-      //     p.setClientId(null);
-      //   }
-      // })
+    const playersConnected = [...clients.values()].filter(
+      (c) => c.getRole() === "PLAYER" && !c.isDisconnected(),
+    );
+    if (playersDisconnected.length > 0) {
       playersDisconnected.forEach((p) => {
         if (p.getClientId() !== existingClient.getClientId()) {
           p.setRole("SPECTATOR");
@@ -104,19 +102,17 @@ class GameGateway {
       });
     }
     // if (playersDisconnected.length === 1) {
-    //   // if (
-    //   //   playersDisconnected[0].getClientId() !== existingClient?.getClientId()
-    //   // ) {
-    //   //   clients.get(socket).setRole("SPECTATOR");
-    //   //   clients.get(socket).setRole(null);
-    //   // }
     //   if (
     //     playersDisconnected[0].getClientId() !== existingClient?.getClientId()
     //   ) {
-    //     if (playersConnected === 1) {
-    //       existingClient.setRole()
+    //     // if (playersConnected === 1) {
+    //       const disconnectedPlayerId = playersDisconnected[0].getClientId();
     //       playersDisconnected[0].setRole("SPECTATOR");
     //       playersDisconnected[0].setClientId(null);
+    //       existingClient.setRole("PLAYER");
+    //       existingClient.setClientId(disconnectedPlayerId);
+    //       // playersDisconnected[0].setRole("SPECTATOR");
+    //       // playersDisconnected[0].setClientId(null);
     //     }
     //   } else {
     //     playersDisconnected[0].setRole("SPECTATOR");

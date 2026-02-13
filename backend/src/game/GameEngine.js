@@ -217,14 +217,19 @@ class GameEngine {
     if (this.isAIEnabled) this.disableAI();
   }
   onPlayerDisconnected(playerId, roomClients) {
+    if (
+      this.state.status === GameStatus.WAITING
+    ) {
+      return;
+    }
     const players = [...roomClients.values()].filter(
       (c) => c.getRole() === "PLAYER"
     );
-    const disconnectedPlayers = players.filter(
-      (p) => p.isDisconnected()
-    )
+    // const disconnectedPlayers = players.filter(
+    //   (p) => p.isDisconnected()
+    // )
     if (this.state.status === GameStatus.WAITING_OPPONENT) {
-      if (players.length === 2 && this.disconnectedClient) {
+      if (players.length === 2) {
         setTimeout(() => {
           this.state.status = GameStatus.WAITING;
           players.forEach(
@@ -234,10 +239,7 @@ class GameEngine {
       }
       return;
     }
-    if (
-      this.state.status !== GameStatus.RUNNING
-    )
-      return;
+
     this.state.status = GameStatus.PAUSED;
     console.log("On player disconnected:", playerId);
     setTimeout(() => {
