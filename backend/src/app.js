@@ -74,7 +74,7 @@ const start = async () => {
 // this way the WS upgrade request will succeed and the WebSocket connection will be established.
 // A websocket connection starts with an HTTP request that includes an "Upgrade" header.
 // A WebSocket route is different from an HTTP route.
-fastify.get('/game', (req, res) => {
-    res.status(200).send('WebSocket endpoint for game connections');
-});
+// fastify.get('/game', (req, res) => {
+//     res.status(200).send('WebSocket endpoint for game connections');
+// });
 start();

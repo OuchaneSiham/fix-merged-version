@@ -88,17 +88,18 @@ export function useGameSocket(roomId, setRoomId) {
         // This ensures it works in both development
         // and production environments without hardcoding
         // the backend URL.
-        // Here it means if the page is served over HTTPS, 
-        // we use wss, otherwise ws. The host is the same as the 
+        // Here it means if the page is served over HTTPS,
+        // we use wss, otherwise ws. The host is the same as the
         // page host, and we keep the /game path and query params.
-        // Browsers block mixed content, so if the page is HTTPS, 
+        // Browsers block mixed content, so if the page is HTTPS,
         // the WebSocket must also be secure (wss).
         const protocol = window.location.protocol === "https:" ? "wss" : "ws";
         // The host includes hostname and port (e.g., localhost:3000 or myapp.com)
         // it connects the WS to the same server that served the frontend.
         const host = window.location.host; // includes hostname and port
         // Connexion WebSocket vers la room spécifique
-        const WS_URL = `${protocol}://${host}/game?token=${encodeURIComponent(token)}&roomId=${encodeURIComponent(roomId)}`;
+        // const WS_URL = `${protocol}://${host}/game?token=${encodeURIComponent(token)}&roomId=${encodeURIComponent(roomId)}`;
+        const WS_URL = `${protocol}://${host}/ws/game?token=${encodeURIComponent(token)}&roomId=${encodeURIComponent(roomId)}`;
         console.log(`🎮 Connecting to game WebSocket: ${roomId}`);
         const ws = new WebSocket(WS_URL);
 
