@@ -21,7 +21,7 @@ services:
       - db
     ports:
       - "8281:8281"
-      - "5000:5000"
+      # - "5000:5000"
       
   frontend:
     build: ./frontend

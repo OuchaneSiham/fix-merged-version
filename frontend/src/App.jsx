@@ -1,5 +1,5 @@
-import Register from "./Register";
-import Login from "./Login";
+// import Register from "./Register";
+// import Login from "./Login";
 import Profile from "./Profile.jsx";
 import AdminDashboard from "./AdminDashboard.jsx";
 import AdminUsers from "./AdminUsers.jsx";
@@ -11,6 +11,13 @@ import PrivacyPolicy from "./PrivacyPolicy.jsx";
 import TermsOfService from "./TermsOfService.jsx";
 import Footer from "./Footer.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import Landing from "./pages/LandingPage/index.jsx"
+//new paths 
+// import Login from "./pages/Auth/Login"
+// import SignUp from "./pages/Auth/register";
+
+import Login from "./pages/Auth/Login/index.jsx";
+import SignUp from "./pages/Auth/register/index.jsx";
 
 function App() {
   const { token } = useAuth();
@@ -20,7 +27,8 @@ function App() {
     <GoogleOAuthProvider clientId="470373993744-tjq6l6bk7ikvbvl46vpbd12pcqepuctb.apps.googleusercontent.com">
       <div>
         <Routes>
-          <Route path="/" element={<Register />} />
+          <Route path="/" element={<Landing />}/> 
+          <Route path="/" element={<SignUp />} />
           <Route path="/login" element={<Login />} />
           {/* <Route 
             path="/profile" 
