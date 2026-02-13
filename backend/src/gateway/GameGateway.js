@@ -125,11 +125,17 @@ class GameGateway {
             playersConnected,
             engine.isAIEnabled,
           );
+         const playersReady = [...clients.values()].filter(
+            (c) => c.getIsReady(),
+          ).length;
           if (
-            playersConnected === 2 ||
+            (playersConnected === 2 && playersReady === 2) ||
             (playersConnected === 1 && engine.isAIEnabled)
           ) {
             engine.state.status = GameStatus.RUNNING;
+          }
+          if (playersConnected === 1 && playersReady === 1 && !engine.isAIEnabled) {
+            engine.state.status = GameStatus.WAITING_OPPONENT;
           }
         }, 3000);
       }
