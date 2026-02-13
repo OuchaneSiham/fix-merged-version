@@ -11,8 +11,6 @@ const ChatService = require("./chat/chatService");
 const chatController = require("./chat/chatController");
 const jwtw = require("./routes/plugin");
 const userRoutes = require("./routes/user-route");
-
-// ✅ Import GameGateway
 const GameGateway = require("./gateway/GameGateway");
 
 fastify.register(cors, {
@@ -23,6 +21,7 @@ fastify.register(cors, {
 });
 
 fastify.register(multipart);
+
 fastify.register(static, {
     root: path.join(__dirname, "..", 'uploads'),
     prefix: "/uploads/"
@@ -31,13 +30,12 @@ fastify.register(static, {
 fastify.register(jwtw);
 fastify.register(userRoutes, { prefix: "/api/v1/users" });
 
-// Chat WebSocket
+// ✅ Create instances but DON'T initialize Socket.IO yet
 const socketServer = new SocketServer();
-socketServer.init(fastify);
-
 const chatGateway = new ChatGateway(socketServer);
 const chatService = new ChatService(prisma, chatGateway);
 
+// ✅ Register chat routes (Socket.IO not needed for route registration)
 fastify.register(async (instance) => {
     instance.register(chatController(chatService));
 }, { prefix: "/api/v1/chat" });
@@ -48,9 +46,7 @@ const start = async () => {
             port: 8281,
             host: '0.0.0.0'
         });
-        
-        // ✅ Attach Game Gateway to the SAME port (8281)
-        // fastify.server is the raw Node.js HTTP server
+        socketServer.init(fastify);
         const gameGateway = new GameGateway(fastify.server);
         
         console.log(`
@@ -66,15 +62,4 @@ const start = async () => {
     }
 };
 
-// When refreshing the page on /game 
-// the frontend will try to connect to ws or wss:localhost:8281/game 
-// the server has no HTTP route for /game but it has a WS route for /game
-// so the browser will make an HTTP request (GET) /game which will return 404,
-// so to solve this we can add a simple HTTP route for /game that just returns 200 OK,
-// this way the WS upgrade request will succeed and the WebSocket connection will be established.
-// A websocket connection starts with an HTTP request that includes an "Upgrade" header.
-// A WebSocket route is different from an HTTP route.
-// fastify.get('/game', (req, res) => {
-//     res.status(200).send('WebSocket endpoint for game connections');
-// });
 start();

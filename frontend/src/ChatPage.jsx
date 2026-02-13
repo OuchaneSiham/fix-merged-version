@@ -59,16 +59,14 @@ const ChatPage = () => {
       alert(`Cannot ${action} user at this time.`);
     }
   };
-  useEffect(() => {
+useEffect(() => {
     socket.connect();
-
     const initialize = async () => {
       const data = await getConversations();
       setConversations(data);
       await fetchBlockedUsers();
       const params = new URLSearchParams(location.search);
       const convIdFromUrl = params.get('conv');
-
       if (convIdFromUrl) {
         const target = data.find(c => c.id === parseInt(convIdFromUrl));
         if (target) {
@@ -76,13 +74,11 @@ const ChatPage = () => {
         }
       }
     };
-
     initialize();
-
     return () => {
       socket.disconnect();
     };
-  }, [location.search, selectChat]);
+  }, [location.search]);
 
   useEffect(() => {
     const handleNewMessage = (msg) => {
