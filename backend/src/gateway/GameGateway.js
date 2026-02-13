@@ -125,7 +125,7 @@ class GameGateway {
             playersConnected,
             engine.isAIEnabled,
           );
-         const playersReady = [...clients.values()].filter(
+          const playersReady = [...clients.values()].filter(
             (c) => c.getIsReady(),
           ).length;
           if (
@@ -133,9 +133,6 @@ class GameGateway {
             (playersConnected === 1 && engine.isAIEnabled)
           ) {
             engine.state.status = GameStatus.RUNNING;
-          }
-          if (playersConnected === 1 && playersReady === 1 && !engine.isAIEnabled) {
-            engine.state.status = GameStatus.WAITING_OPPONENT;
           }
         }, 3000);
       }
@@ -240,7 +237,7 @@ class GameGateway {
       client.setDisconnected(true);
       if (client.getRole() === "PLAYER") {
         engine.disconnectedClient = client;
-        engine.onPlayerDisconnected(client.getClientId());
+        engine.onPlayerDisconnected(client.getClientId(), clients);
       }
     });
   }
@@ -335,19 +332,23 @@ class GameGateway {
         engine.state.status === GameStatus.WAITING_OPPONENT &&
         !engine.aiTimeout
       ) {
-        engine.aiTimeout = setTimeout(() => {
-          const currentPlayers = [...clients.values()].filter(
-            (c) => c.getRole() === "PLAYER" && c.getIsReady(),
-          ).length;
-          if (currentPlayers === 1) {
-            console.log("No opponent found enabling AI in room", roomId);
-            engine.enableAI();
-            room.aiAdded = true; // Denied access to other clients
-            console.log("AI added to room", roomId);
-            this.checkGameStart(roomId);
-          }
-          engine.aiTimeout = null;
-        }, 60000);
+        // const players = [...clients.values()].filter(
+        //   (c) => c.getRole() === "PLAYER",
+        // ).length;
+        // if ()
+          engine.aiTimeout = setTimeout(() => {
+            const currentPlayers = [...clients.values()].filter(
+              (c) => c.getRole() === "PLAYER" && c.getIsReady(),
+            ).length;
+            if (currentPlayers === 1) {
+              console.log("No opponent found enabling AI in room", roomId);
+              engine.enableAI();
+              room.aiAdded = true; // Denied access to other clients
+              console.log("AI added to room", roomId);
+              this.checkGameStart(roomId);
+            }
+            engine.aiTimeout = null;
+          }, 60000);
       }
       // resetScheduled is used to avoid
       // multiple resets being scheduled

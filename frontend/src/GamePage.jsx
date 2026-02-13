@@ -16,8 +16,10 @@ function GamePage() {
   });
 
   const handleSelectRoom = (id) => {
-    setRoomId(id);
-    sessionStorage.setItem("roomId", id);
+    if (id) {
+      setRoomId(id);
+      sessionStorage.setItem("roomId", id);
+    }
   };
 
   const { wsRef, connected, leaveRoom } = useGameSocket(roomId, setRoomId);

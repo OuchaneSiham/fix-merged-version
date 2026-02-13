@@ -27,10 +27,11 @@ export default function RoomPage({ onSelectRoom }) {
           onChange={(e) => setInput(e.target.value)}
           className="border p-2 mb-4"
           placeholder="Room ID"
+          required
         />
         <button
           className="bg-blue-500 text-white px-4 py-2 rounded"
-          onClick={() => onSelectRoom(input || "default-room")}
+          onClick={() => onSelectRoom(input)}
         >
           Join Room
         </button>

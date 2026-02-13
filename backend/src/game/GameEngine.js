@@ -109,7 +109,7 @@ class GameEngine {
     const ball = this.ball.getState();
     const paddleCenter = paddle.y + paddle.height / 2;
     const tolerance = 20;
-    const aiSpeed = 0.8; 
+    const aiSpeed = 0.8;
     const reactionTime = 0.10;
     const maxError = 25;
     this.aiTimer += deltaTime;
@@ -164,8 +164,8 @@ class GameEngine {
       this.ball.setSpeed(1.05);
       this.ball.setPosition(
         leftPaddle.getBounds().x +
-          leftPaddle.getBounds().width +
-          this.ball.getState().radius,
+        leftPaddle.getBounds().width +
+        this.ball.getState().radius,
       );
     }
     if (this.touchPaddle(rightPaddle) && this.ball.getVelocity().vx > 0) {
@@ -216,10 +216,24 @@ class GameEngine {
     this.disconnectedClient = null;
     if (this.isAIEnabled) this.disableAI();
   }
-  onPlayerDisconnected(playerId) {
+  onPlayerDisconnected(playerId, roomClients) {
+    const players = [...roomClients.values()].filter(
+      (c) => c.getRole() === "PLAYER"
+    );
+
+    if (this.state.status === GameStatus.WAITING_OPPONENT) {
+      if (players.length === 2) {
+        setTimeout(() => {
+          this.state.status = GameStatus.WAITING;
+          players.forEach(
+            (p) => p.setIsReady(false)
+          )
+        }, 180000)
+      }
+      return;
+    }
     if (
-      this.state.status !== GameStatus.RUNNING &&
-      this.state.status !== GameStatus.WAITING_OPPONENT
+      this.state.status !== GameStatus.RUNNING
     )
       return;
     this.state.status = GameStatus.PAUSED;
@@ -240,7 +254,7 @@ class GameEngine {
     this.state.status = GameStatus.RUNNING;
   }
   resetGame() {
-    this.state.status = GameStatus.WAITING;4
+    this.state.status = GameStatus.WAITING;
     this.state.winnerId = null;
     this.player1.score = 0;
     this.player2.score = 0;
