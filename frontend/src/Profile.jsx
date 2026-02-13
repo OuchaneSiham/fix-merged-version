@@ -483,12 +483,6 @@ function Profile() {
       >
         Logout
       </button>
-      <button
-        onClick={handleLogout}
-        style={{ marginTop: "30px", color: "red" }}
-      >
-        Logout
-      </button>
     </div>
   );
 }

@@ -24,7 +24,7 @@ function Login() {
         body: JSON.stringify(formData),
       });
 
-      const data = await resp.json(); // parse always — even on error
+      const data = await resp.json(); 
 
       console.log("Login response status:", resp.status);
       console.log("Login response data:", data);
@@ -35,9 +35,6 @@ function Login() {
           alert("Login succeeded but no token received from server!");
           return;
         }
-        // localStorage.setItem("token", sessionToken);
-        // console.log("Token saved:", sessionToken.substring(0, 20) + "...");
-        // navigate("/profile");
         login(sessionToken);
         navigate("/profile");
       } else {

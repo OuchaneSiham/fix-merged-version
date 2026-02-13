@@ -10,7 +10,7 @@ function Register() {
     const handlechange = (event) => {
         setFormData({...formData, [event.target.id]: event.target.value})
     }
-    
+    console.log("hellooooooo");
     const handleSubmit = async (event) => {
         event.preventDefault();
         try {

@@ -91,7 +91,7 @@ fastify.post("/login", async function (request, reply) {
             id: user.id,
             email: user.email,
             role: user.role
-        }, { expiresIn: "24h" });
+        }, { expiresIn: "1h" });
         await prisma.user.update({
             where: { id: user.id },
             data: { isOnline: true }
@@ -146,7 +146,7 @@ fastify.post("/google-auth", async function (request, reply) {
             id: user.id,
             email: user.email,
             role: user.role 
-        }, { expiresIn: "24h" });
+        }, { expiresIn: "1h" });
 
         reply.send({ message: "Login successful", token: sessionToken });
 

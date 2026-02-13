@@ -1,39 +1,49 @@
 import { API_BASE_URL } from './config';
 import { useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
-function Google()
-{
-  const navigate = useNavigate();
-  const url = `${API_BASE_URL}/users/google-auth`;
-     const handleSucc = async (credentialResponse) => {
+import { useAuth } from "../context/AuthContext.jsx";
 
-       const resp =  await fetch(url, {
-        method: "POST",
-        headers:{
-            "Content-Type" : "application/json",
-        },
-        body: JSON.stringify({ token: credentialResponse.credential }),
+function Google() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const url = `${API_BASE_URL}/users/google-auth`;
+
+  const handleSucc = async (credentialResponse) => {
+  try {
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: credentialResponse.credential }),
     });
-    if(resp.ok)
-      {
-        const data = await resp.json();
-        const sessionToken = data.token;
-        const saved = localStorage.setItem("token",sessionToken);
+
+    const data = await resp.json();
+
+    if (resp.ok) {
+      const tokenFromServer = data.token; 
+      
+      if (tokenFromServer) {
+        login(tokenFromServer);
         navigate("/profile");
-        console.log(data, "database user");
+      } else {
+        console.error("No token found in response data");
       }
-      else 
-      {
-          const data = await resp.json();
-          console.log(data, "server error");
-      }
-      }
-      const handleErr =() =>{
-        console.log("failed to login");
-      }
-    return(<>
-    <GoogleLogin onSuccess={handleSucc} onError={handleErr}>
-    </GoogleLogin>
-    </>);
+    } else {
+      console.log(data, "server error");
+    }
+  } catch (error) {
+    console.error("Google login network error:", error);
+  }
+};
+
+  const handleErr = () => {
+    console.log("failed to login with Google");
+  };
+
+  return (
+    <>
+      <GoogleLogin onSuccess={handleSucc} onError={handleErr} />
+    </>
+  );
 }
-export default Google 
+
+export default Google;
