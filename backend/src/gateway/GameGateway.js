@@ -372,7 +372,7 @@ class GameGateway {
       const deltaTime = (currentTime - lastUpdateTime) / 1000;
       lastUpdateTime = currentTime;
 
-      engine.update(deltaTime, isAiRoom);
+      engine.update(deltaTime, isAiRoom, room.clients);
       this.broadcastSnapshot(roomId);
 
       // When a game is finished,

@@ -13,9 +13,11 @@ model User {
   googleId         String?      @unique 
   avatar           String @default("/uploads/default.png") 
   role             String       @default("user") 
-  isOnline         Boolean      @default(false)   
-  twoFactorEnabled Boolean      @default(false)  
-  twoFactorSecret  String?  
+  isOnline         Boolean      @default(false)
+  totalWins        Int          @default(0)
+  totalLosses      Int          @default(0)
+  matchesWon       Match[]      @relation("UserWins")
+  matchesLost      Match[]      @relation("UserLosses")
   
   sentRequests     Friendship[] @relation("SentRequests")
   receivedRequests Friendship[] @relation("ReceivedRequests")
@@ -65,4 +67,15 @@ model Message {
   sender         User         @relation(fields: [senderId], references: [id])
   conversation   Conversation @relation(fields: [conversationId], references: [id])
   createdAt      DateTime     @default(now())
+}
+model Match {
+  id           Int      @id @default(autoincrement())
+  winnerId     Int
+  loserId      Int
+  winner       User     @relation("UserWins", fields: [winnerId], references: [id])
+  loser        User     @relation("UserLosses", fields: [loserId], references: [id])
+  winnerScore  Int
+  loserScore   Int
+
+  playedAt     DateTime @default(now())
 }

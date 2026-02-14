@@ -63,11 +63,13 @@ class GameEngine {
       return;
     }
   }
-  update(deltaTime, isAiRoom) {
+  update(deltaTime, isAiRoom, roomClients) {
+    console.log(roomClients);
     if (this.state.status !== GameStatus.RUNNING) return;
     this.updatePlayers(deltaTime);
     this.ball.update(deltaTime);
-    if (this.isAIEnabled) {
+    if (this.isAIEnabled)
+      {
       this.updateAI(deltaTime);
     }
     this.checkWallCollisions();
