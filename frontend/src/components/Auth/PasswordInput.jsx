@@ -1,5 +1,5 @@
-import ClosedEye from '../../assets/images/ClosedEye.png';
-import openEye from '../../assets/images/openEye.png';
+import ClosedEye from '../../Assets/images/closedEye.png';
+import openEye from '../../Assets/images/openEye.png';
 import { useState } from 'react';
 
 export default function PasswordInput({htmlFor ,text, id, value, onChange})
@@ -8,6 +8,7 @@ export default function PasswordInput({htmlFor ,text, id, value, onChange})
     const [passwordType, setpasswordType] = useState('password');
 
     function    changeEye()
+
     {
         setEyeButton(eyeButtun == openEye ? ClosedEye : openEye);
         setpasswordType(eyeButtun == openEye ? 'text': 'password')

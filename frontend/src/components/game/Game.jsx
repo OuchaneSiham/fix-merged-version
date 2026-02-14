@@ -107,13 +107,13 @@ export default function Game({ gameState, wsRef }) {
       ref={canvasRef}
       width={gameState?.field.width || 800}
       height={gameState?.field.height || 600}
-      className="
+      className={`
     block mx-auto
     bg-black
     rounded-xl
     border border-slate-700
     shadow-2xl shadow-cyan-500/10
-  "
+  `}
     />
   );
 }

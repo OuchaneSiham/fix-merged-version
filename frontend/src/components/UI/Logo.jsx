@@ -1,4 +1,4 @@
-import LogoSvg from '../../assets/images/logo.svg';
+import LogoSvg from '../../Assets/images/logo.svg';
 import clsx from 'clsx'
 
 export default function Logo({variant = 'navbar' })
