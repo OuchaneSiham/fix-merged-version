@@ -543,9 +543,20 @@ class GameGateway {
     const loserScore = stats.loserScore;
     const date = stats.date;
 
+    // For each user increment the total games played 
+    //  for the winner increment the total games won 
+    // for the loser increment the total games lost 
+    // you can record other stats if you have 
+    // fields for them in the database. 
+    // You can use total won to calculate the win rate. 
+    // You can use the scores to calculate the average 
+    // score for each player(hint: you need to store the 
+    // total score for each player and the total games played
+    // to calculate the average score). 
+    // Just an Idea no need to implement all listed above.
     // Here I am stuck; I need your help Siham
     // Prisma needed here to record the stats in the
-    // database
+    // database.
   }
 }
 
