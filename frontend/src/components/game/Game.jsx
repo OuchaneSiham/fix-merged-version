@@ -1,8 +1,13 @@
 import { useEffect, useRef } from "react";
 import usePlayerInputs from "../../hooks/game/usePlayerInputs.js";
+import wallSoundFile from "../../Assets/sounds/wall.mp3";
+import paddleSoundFile from "../../Assets/sounds/paddle.mp3";
+import rollingSoundFile from "../../Assets/sounds/rolling.mp3";
 
 export default function Game({ gameState, wsRef }) {
   const canvasRef = useRef(null);
+  const wallSound = useRef(null);
+  const paddleSound = useRef(null);
   usePlayerInputs(wsRef);
   useEffect(() => {
     // Check is the gameState is null
@@ -62,6 +67,41 @@ export default function Game({ gameState, wsRef }) {
     ctx.stroke();
     ctx.setLineDash([]);
   }, [gameState]);
+  useEffect(() => {
+    wallSound.current = new Audio(wallSoundFile);
+    paddleSound.current = new Audio(paddleSoundFile);
+    wallSound.current.preload = "auto";
+    paddleSound.current.preload = "auto";
+
+    wallSound.current.load();
+    paddleSound.current.load();
+  }, []);
+  const lastEventsRef = useRef([]);
+
+  useEffect(() => {
+    if (!gameState) return;
+
+    const newEvents = gameState.events?.filter(
+      (e) => !lastEventsRef.current.includes(e),
+    );
+
+    newEvents.forEach((e) => {
+      if (gameState.status !== "RUNNING") return;
+
+      if (e.type === "BALL_HIT_WALL") {
+        wallSound.current.currentTime = 0;
+        wallSound.current.play();
+      }
+
+      if (e.type === "BALL_HIT_PADDLE") {
+        paddleSound.current.currentTime = 0;
+        paddleSound.current.play();
+      }
+    });
+
+    lastEventsRef.current = gameState.events || [];
+  }, [gameState.events]);
+
   return (
     <canvas
       ref={canvasRef}

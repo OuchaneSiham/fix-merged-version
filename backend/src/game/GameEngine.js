@@ -14,9 +14,13 @@ class GameEngine {
   disconnectedClient;
   inputHandler;
   aiTimeout = null;
+  waitingOpponentTimeout = null;
   isAIEnabled = false;
   aiDifficulty = "normal";
   aiTimer = 0;
+  gamePaused = false;
+  pausedByPlayerId = null;
+  events = []; // To emit a sound effect on the client when a collision occurs
   constructor() {
     this.ball = new Ball(this.fieldWidth / 2, this.fieldHeight / 2, 300);
     this.player1 = new Player(
@@ -30,8 +34,11 @@ class GameEngine {
     this.state = new GameState();
     this.inputHandler = new InputHandler(this.player1, this.player2);
     this.disconnectedClient = null;
+    this.waitingOpponentTimeout = null;
+    this.gamePaused = false;
+    this.pausedByPlayerId = null;
   }
-  checkScore() {
+  checkScore(isAiRoom) {
     const score1 = this.player1.getPlayerScore();
     const score2 = this.player2.getPlayerScore();
     if (this.ball.getState().x + this.ball.getState().radius < 0) {
@@ -48,15 +55,15 @@ class GameEngine {
       this.ball.reset();
     }
     if (score1 >= this.state.maxScore) {
-      this.endGame("player1");
+      this.endGame("player1", isAiRoom);
       return;
     }
     if (score2 >= this.state.maxScore) {
-      this.endGame("player2");
+      this.endGame("player2", isAiRoom);
       return;
     }
   }
-  update(deltaTime) {
+  update(deltaTime, isAiRoom) {
     if (this.state.status !== GameStatus.RUNNING) return;
     this.updatePlayers(deltaTime);
     this.ball.update(deltaTime);
@@ -65,28 +72,28 @@ class GameEngine {
     }
     this.checkWallCollisions();
     this.checkPaddleCollisions();
-    this.checkScore();
+    this.checkScore(isAiRoom);
   }
   updatePlayers(deltaTime) {
-    if (this.player1.input.up) {
+    if (this.player1.input.up && !this.player1.isAi) {
       const paddle = this.player1.getPlayerPaddle();
       if (paddle.getBounds().y > 0) {
         paddle.moveUp(deltaTime);
       }
     }
-    if (this.player1.input.down) {
+    if (this.player1.input.down && !this.player1.isAi) {
       const paddle = this.player1.getPlayerPaddle();
       if (paddle.getBounds().y + paddle.getBounds().height < this.fieldHeight) {
         paddle.moveDown(deltaTime);
       }
     }
-    if (this.player2.input.up && !this.isAIEnabled) {
+    if (this.player2.input.up && !this.player2.isAi) {
       const paddle = this.player2.getPlayerPaddle();
       if (paddle.getBounds().y > 0) {
         paddle.moveUp(deltaTime);
       }
     }
-    if (this.player2.input.down && !this.isAIEnabled) {
+    if (this.player2.input.down && !this.player2.isAi) {
       const paddle = this.player2.getPlayerPaddle();
       if (paddle.getBounds().y + paddle.getBounds().height < this.fieldHeight) {
         // console.log("PLAYER 2 MOVE_DOWN", this.player2.input.down);
@@ -96,21 +103,26 @@ class GameEngine {
   }
   // Call this method to set the control
   // of the player to AI
-  enableAI() {
+  enableAI(playerId = "player2") {
     this.isAIEnabled = true;
+    const player = playerId === "player1" ? this.player1 : this.player2;
+    player.isAi = true;
     this.player2.input.up = false;
     this.player2.input.down = false;
   }
   disableAI() {
     this.isAIEnabled = false;
+    this.player1.isAi = false;
+    this.player2.isAi = false;
   }
   updateAI(deltaTime) {
-    const paddle = this.player2.getPlayerPaddle();
+    const iaPlayer = this.player1.isAi ? this.player1 : this.player2;
+    const paddle = iaPlayer.getPlayerPaddle();
     const ball = this.ball.getState();
     const paddleCenter = paddle.y + paddle.height / 2;
     const tolerance = 20;
     const aiSpeed = 0.8;
-    const reactionTime = 0.10;
+    const reactionTime = 0.1;
     const maxError = 25;
     this.aiTimer += deltaTime;
     if (this.aiTimer < reactionTime) {
@@ -152,7 +164,8 @@ class GameEngine {
       this.ball.getState().y - radius <= 0 ||
       this.ball.getState().y + radius >= this.fieldHeight
     ) {
-      console.log("Wall collision detected at y =", this.ball.getState().y);
+      //   console.log("Wall collision detected at y =", this.ball.getState().y);
+      this.events.push({ type: "BALL_HIT_WALL" }); // Wall hit event
       this.ball.bounceY();
     }
   }
@@ -160,15 +173,17 @@ class GameEngine {
     const leftPaddle = this.player1.getPlayerPaddle();
     const rightPaddle = this.player2.getPlayerPaddle();
     if (this.touchPaddle(leftPaddle) && this.ball.getVelocity().vx < 0) {
+      this.events.push({ type: "BALL_HIT_PADDLE" }); // Paddle hit event
       this.ball.bounceX();
       this.ball.setSpeed(1.05);
       this.ball.setPosition(
         leftPaddle.getBounds().x +
-        leftPaddle.getBounds().width +
-        this.ball.getState().radius,
+          leftPaddle.getBounds().width +
+          this.ball.getState().radius,
       );
     }
     if (this.touchPaddle(rightPaddle) && this.ball.getVelocity().vx > 0) {
+      this.events.push({ type: "BALL_HIT_PADDLE" });
       this.ball.bounceX();
       this.ball.setSpeed(1.05);
       this.ball.setPosition(
@@ -177,7 +192,7 @@ class GameEngine {
     }
   }
   getSnapshot() {
-    return {
+    const snapshot = {
       ball: this.ball.getState(),
       player1: {
         x: this.player1.getPlayerPaddle().getBounds().x,
@@ -196,7 +211,12 @@ class GameEngine {
       field: { width: this.fieldWidth, height: this.fieldHeight },
       status: GameStatus[this.state.status],
       winnerId: this.state.winnerId ?? null,
+      gamePaused: this.gamePaused,
+      pausedByPlayerId: this.pausedByPlayerId,
+      events: [...this.events],
     };
+    this.events.length = 0; // Clear events after sending the snapshot
+    return snapshot;
   }
   handlePlayerInput(playerId, action) {
     const data = this.getSnapshot();
@@ -209,21 +229,19 @@ class GameEngine {
     player.setInput("MOVE_UP", false);
     player.setInput("MOVE_DOWN", false);
   }
-  endGame(winnerId) {
+  endGame(winnerId, isAiRoom) {
     // if (this.state.status === GameStatus.FINISHED) return;
     this.state.finish();
     this.state.winnerId = winnerId;
     this.disconnectedClient = null;
-    if (this.isAIEnabled) this.disableAI();
+    if (this.isAIEnabled && !isAiRoom) this.disableAI();
   }
   onPlayerDisconnected(playerId, roomClients) {
-    if (
-      this.state.status === GameStatus.WAITING
-    ) {
+    if (this.state.status === GameStatus.WAITING) {
       return;
     }
     const players = [...roomClients.values()].filter(
-      (c) => c.getRole() === "PLAYER"
+      (c) => c.getRole() === "PLAYER",
     );
     // const disconnectedPlayers = players.filter(
     //   (p) => p.isDisconnected()
@@ -232,10 +250,8 @@ class GameEngine {
       if (players.length === 2) {
         setTimeout(() => {
           this.state.status = GameStatus.WAITING;
-          players.forEach(
-            (p) => p.setIsReady(false)
-          );
-        }, 180000)
+          players.forEach((p) => p.setIsReady(false));
+        }, 180000);
       }
       return;
     }
@@ -257,15 +273,29 @@ class GameEngine {
   startGame() {
     this.state.status = GameStatus.RUNNING;
   }
+  pauseGame(playerId) {
+    if (this.state.status === GameStatus.RUNNING) {
+      this.state.status = GameStatus.PAUSED;
+      this.gamePaused = true;
+      this.pausedByPlayerId = playerId;
+    }
+  }
+  resumeGame() {
+    if (this.state.status === GameStatus.PAUSED) {
+      this.state.status = GameStatus.RUNNING;
+      this.gamePaused = false;
+      this.pausedByPlayerId = null;
+    }
+  }
   resetGame() {
     this.state.status = GameStatus.WAITING;
     this.state.winnerId = null;
     this.player1.score = 0;
     this.player2.score = 0;
     this.ball.reset();
+    this.events = [];
     this.player1.resetPlayer(this.fieldHeight / 2 - 50);
     this.player2.resetPlayer(this.fieldHeight / 2 - 50);
   }
 }
 module.exports = GameEngine;
-

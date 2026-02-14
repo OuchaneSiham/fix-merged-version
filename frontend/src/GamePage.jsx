@@ -23,7 +23,10 @@ function GamePage() {
   };
 
   const { wsRef, connected, leaveRoom } = useGameSocket(roomId, setRoomId);
-  const { gameState, sendReady } = useGameState(wsRef, connected);
+  const { gameState, sendReady, pauseGame, resumeGame } = useGameState(
+    wsRef,
+    connected,
+  );
 
   //   console.log("Current roomId:", roomId);
   //   console.log("Game state:", gameState);
@@ -55,23 +58,49 @@ function GamePage() {
         <h1 className="mb-6 text-5xl font-extrabold tracking-widest uppercase">
           Pong
         </h1>
-        <button
-          onClick={leaveRoom}
-          className="mb-4 px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg font-bold"
-        >
-          Quit Room
-        </button>
+        <div className="flex flex-row justify-center gap-4 mb-4">
+          <button
+            onClick={leaveRoom}
+            className="mb-4 px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg font-bold"
+          >
+            Quit Room
+          </button>
+          <button
+            onClick={pauseGame}
+            className="mb-4 px-6 py-3 bg-yellow-600 hover:bg-yellow-700 rounded-lg font-bold"
+          >
+            Pause Game
+          </button>
+        </div>
         <Game gameState={gameState} wsRef={wsRef} />
       </div>
     );
   }
 
   if (gameState.you === "SPECTATOR") {
-    if (gameState.status === "WAITING" || gameState.status === "WAITING_OPPONENT") {
-      return <GameWaiting sendReady={sendReady} spectator={true} leaveRoom={leaveRoom} />;
+    if (
+      gameState.status === "WAITING" ||
+      gameState.status === "WAITING_OPPONENT"
+    ) {
+      return (
+        <GameWaiting
+          sendReady={sendReady}
+          spectator={true}
+          leaveRoom={leaveRoom}
+        />
+      );
     }
     if (gameState.status === "PAUSED") {
-      return <GamePaused text="Game paused" />;
+      return (
+        <GamePaused
+          text="Game paused"
+          gamePaused={gameState.gamePaused}
+          pausedByPlayerId={gameState.pausedByPlayerId}
+          me={gameState.you}
+          resumeGame={resumeGame}
+          isPlayer={false}
+        />
+      );
     }
     if (gameState.status === "FINISHED") {
       return <GameOver gameState={gameState} />;
@@ -83,11 +112,18 @@ function GamePage() {
   if (!me && gameState.you !== "SPECTATOR") {
     return <div className="text-white">Initializing your paddle...</div>;
   }
-  const opponent = gameState.you === "player1" ? gameState.player2 : gameState.player1;
+  const opponent =
+    gameState.you === "player1" ? gameState.player2 : gameState.player1;
   const opponentReady = opponent?.ready || gameState.aiEnabled;
 
   if (!me.ready) {
-    return <GameWaiting sendReady={sendReady} spectator={false} leaveRoom={leaveRoom} />;
+    return (
+      <GameWaiting
+        sendReady={sendReady}
+        spectator={false}
+        leaveRoom={leaveRoom}
+      />
+    );
   }
 
   if (me.ready && !opponentReady && gameState.status === "WAITING_OPPONENT") {
@@ -95,7 +131,16 @@ function GamePage() {
   }
 
   if (gameState.status === "PAUSED") {
-    return <GamePaused text="Player disconnected" />;
+    return (
+      <GamePaused
+        text={gameState.gamePaused ? "Game Paused" : "Player disconnected"}
+        gamePaused={gameState.gamePaused}
+        pausedByPlayerId={gameState.pausedByPlayerId}
+        me={gameState.you}
+        resumeGame={resumeGame}
+        isPlayer={true}
+      />
+    );
   }
 
   if (gameState.status === "FINISHED") {

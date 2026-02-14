@@ -3,6 +3,7 @@
   score = 0; // Player's score
   paddle; // The paddle controlled by the player
   input = { up: false, down: false };
+  isAi = false; // Flag to indicate if the player is controlled by AI
   constructor(id, paddle) {
     this.id = id;
     this.paddle = paddle;

@@ -3,7 +3,9 @@
 export const ClientMessageType = {
     PLAYER_INPUT: "PLAYER_INPUT",
     PLAYER_INPUT_STOP: "PLAYER_INPUT_STOP",
-    PLAYER_READY: "PLAYER_READY"
+    PLAYER_READY: "PLAYER_READY",
+    PAUSE_GAME: "PAUSE_GAME",
+    RESUME_GAME: "RESUME_GAME"
 }
 
 export const ServerMessageType = {

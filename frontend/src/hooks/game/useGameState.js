@@ -98,6 +98,30 @@ export default function useGameState(wsRef, connected) {
       console.error("❌ Cannot send PLAYER_READY: WebSocket not connected");
     }
   };
+   const pauseGame = () => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(
+        JSON.stringify({
+          type: ClientMessageType.PAUSE_GAME,
+        })
+      );
+      console.log("📤 Sent PAUSE_GAME");
+    } else {
+      console.error("❌ Cannot send PAUSE_GAME: WebSocket not connected");
+    }
+  };
+  const resumeGame = () => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(
+        JSON.stringify({
+          type: ClientMessageType.RESUME_GAME,
+        })
+      );
+      console.log("📤 Sent RESUME_GAME");
+    } else {
+      console.error("❌ Cannot send RESUME_GAME: WebSocket not connected");
+    }
+  };
 
-  return { gameState, sendReady };
+  return { gameState, sendReady, pauseGame, resumeGame };
 }
