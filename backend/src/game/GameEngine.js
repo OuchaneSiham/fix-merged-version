@@ -20,6 +20,15 @@ class GameEngine {
   aiTimer = 0;
   gamePaused = false;
   pausedByPlayerId = null;
+  matchStats = {
+    winnerUserId: null,
+    loserUserId: null,
+    winnerScore: 0,
+    loserScore: 0,
+    roomId: null,
+    matchId: null,
+    date: null,
+  };
   events = []; // To emit a sound effect on the client when a collision occurs
   constructor() {
     this.ball = new Ball(this.fieldWidth / 2, this.fieldHeight / 2, 300);
@@ -38,7 +47,7 @@ class GameEngine {
     this.gamePaused = false;
     this.pausedByPlayerId = null;
   }
-  checkScore(isAiRoom) {
+  checkScore(isAiRoom, roomClients, roomId) {
     const score1 = this.player1.getPlayerScore();
     const score2 = this.player2.getPlayerScore();
     if (this.ball.getState().x + this.ball.getState().radius < 0) {
@@ -55,26 +64,24 @@ class GameEngine {
       this.ball.reset();
     }
     if (score1 >= this.state.maxScore) {
-      this.endGame("player1", isAiRoom);
+      this.endGame("player1", isAiRoom, roomClients, roomId);
       return;
     }
     if (score2 >= this.state.maxScore) {
-      this.endGame("player2", isAiRoom);
+      this.endGame("player2", isAiRoom, roomClients, roomId);
       return;
     }
   }
-  update(deltaTime, isAiRoom, roomClients) {
-    console.log(roomClients);
+  update(deltaTime, isAiRoom, roomClients, roomId) {
     if (this.state.status !== GameStatus.RUNNING) return;
     this.updatePlayers(deltaTime);
     this.ball.update(deltaTime);
-    if (this.isAIEnabled)
-      {
+    if (this.isAIEnabled) {
       this.updateAI(deltaTime);
     }
     this.checkWallCollisions();
     this.checkPaddleCollisions();
-    this.checkScore(isAiRoom);
+    this.checkScore(isAiRoom, roomClients, roomId);
   }
   updatePlayers(deltaTime) {
     if (this.player1.input.up && !this.player1.isAi) {
@@ -231,12 +238,31 @@ class GameEngine {
     player.setInput("MOVE_UP", false);
     player.setInput("MOVE_DOWN", false);
   }
-  endGame(winnerId, isAiRoom) {
+  endGame(winnerId, isAiRoom, roomClients, roomId) {
     // if (this.state.status === GameStatus.FINISHED) return;
     this.state.finish();
     this.state.winnerId = winnerId;
     this.disconnectedClient = null;
     if (this.isAIEnabled && !isAiRoom) this.disableAI();
+    if (!isAiRoom) {
+      // First find players in roomClients
+      const players = [...roomClients.values()].filter((c) => {
+        c.getRole() === "PLAYER";
+      });
+      const winnerClient = players.find((p) => p.getClientId() === winnerId);
+      const loserClient =
+        winnerClient.getClientId() === "player1" ? "player2" : "player1";
+      this.matchStats.winnerUserId = winnerClient.getUserId();
+      this.matchStats.loserUserId = loserClient.getUserId();
+      this.matchStats.winnerScore = this.state.maxScore;
+      this.matchStats.loserScore =
+        winnerId === "player1"
+          ? this.player2.getPlayerScore()
+          : this.player1.getPlayerScore();
+      this.matchStats.roomId = roomId;
+      this.matchStats.matchId = `${roomId}-${Date.now()}`;
+      this.matchStats.date = new Date().toISOString();
+    }
   }
   onPlayerDisconnected(playerId, roomClients) {
     if (this.state.status === GameStatus.WAITING) {
@@ -296,12 +322,24 @@ class GameEngine {
     this.player2.score = 0;
     this.ball.reset();
     this.events = [];
+    this.matchStats = {
+      winnerUserId: null,
+      loserUserId: null,
+      winnerScore: 0,
+      loserScore: 0,
+      roomId: null,
+      matchId: null,
+      date: null,
+    };
     this.player1.resetPlayer(this.fieldHeight / 2 - 50);
     this.player2.resetPlayer(this.fieldHeight / 2 - 50);
     this.player1.setInput("MOVE_UP", false);
     this.player1.setInput("MOVE_DOWN", false);
     this.player2.setInput("MOVE_UP", false);
     this.player2.setInput("MOVE_DOWN", false);
+  }
+  getMatchStats() {
+    return this.matchStats;
   }
 }
 module.exports = GameEngine;

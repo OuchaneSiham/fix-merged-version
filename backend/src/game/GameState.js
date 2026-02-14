@@ -10,7 +10,7 @@ class GameState {
     constructor() {
         this.status = GameStatus.WAITING;
         this.winnerId = null;
-        this.maxScore = 5;
+        this.maxScore = 10;
         this.maxPlayers = 2;
     }
 

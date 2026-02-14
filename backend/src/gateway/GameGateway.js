@@ -14,6 +14,7 @@ dotenv.config();
 
 // Change the constructor in GameGateway.js
 class GameGateway {
+  deleteRoomTimeouts = new Map();
   wss;
   rooms = new Map();
   frameIntervals = new Map();
@@ -82,7 +83,17 @@ class GameGateway {
       });
       this.startRoomLoop(roomId);
     }
-
+    // Check if the room is not in deleteRoomTimeouts,
+    // if it is in; clear the timeout and remove it
+    // from the deleteRoomTimeouts Map as a new or existing
+    // client is joining the room before the timeout is executed
+    if (this.deleteRoomTimeouts.has(roomId)) {
+      clearTimeout(this.deleteRoomTimeouts.get(roomId));
+      this.deleteRoomTimeouts.delete(roomId);
+      console.log(
+        `Delete timeout cleared for room ${roomId} as a client joined`,
+      );
+    }
     const room = this.rooms.get(roomId);
     const clients = room.clients;
     const engine = room.engine;
@@ -372,7 +383,7 @@ class GameGateway {
       const deltaTime = (currentTime - lastUpdateTime) / 1000;
       lastUpdateTime = currentTime;
 
-      engine.update(deltaTime, isAiRoom, room.clients);
+      engine.update(deltaTime, isAiRoom, room.clients, roomId);
       this.broadcastSnapshot(roomId);
 
       // When a game is finished,
@@ -381,6 +392,38 @@ class GameGateway {
       // introduce AI opponent if no one has joined
       // the room.
       const clients = room.clients;
+      // Check the number of clients in the room
+      // and there is no more client set a timeout
+      // to clear the room after 10 minutes of
+      // inactivity to avoid memory leaks
+      const totalClients = clients.size;
+      const activeClients = [...clients.values()].filter((c) => {
+        return !c.isDisconnected();
+      });
+      // As deleteRoomTimeouts is global for the class
+      // we need deleteRoomTimeouts as a Map to handle
+      // multiple rooms so we can schedule a delete
+      // for each room independently to avoid deleting
+      // the wrong room when there are multiple rooms.
+      // We can clear the timeout when a new or existing
+      // client joins the room before the timeout is
+      // executed to avoid deleting active rooms.
+      if (totalClients > 0 && activeClients.length === 0) {
+        if (!this.deleteRoomTimeout.has(roomId)) {
+          const timeout = setTimeout(
+            () => {
+              this.rooms.delete(roomId);
+              clearInterval(this.frameIntervals.get(roomId));
+              this.frameIntervals.delete(roomId);
+              this.deleteRoomTimeouts.delete(roomId);
+              console.log(`Room ${roomId} deleted due to inactivity`);
+            },
+            10 * 60 * 1000,
+          ); // 10 minutes before deleting the room if there are no active clients
+          this.deleteRoomTimeouts.set(roomId, timeout);
+        }
+        return;
+      }
       const players = [...clients.values()].filter(
         (c) => c.getRole() === "PLAYER" && !c.isDisconnected(),
       );
@@ -425,6 +468,7 @@ class GameGateway {
       // haven't left the room yet
       if (engine.state.status === GameStatus.FINISHED && !resetScheduled) {
         resetScheduled = true;
+        this.recordMatchStats(engine.getMatchStats());
         setTimeout(() => {
           resetScheduled = false;
           if (!isAiRoom) {
@@ -483,6 +527,25 @@ class GameGateway {
         snapshot: { ...data.snapshot, you: "SPECTATOR" },
       });
     }
+  }
+  // Function to record match stats when a game ends
+  recordMatchStats(stats) {
+    // stats will contain information like winner userId
+    // loser winner userId, winner score, loser score,
+    // roomId, matchId, date.
+    // Variables to holds the stats to record in the database
+
+    const roomId = stats.roomId;
+    const matchId = stats.matchId;
+    const winnerUserId = stats.winnerUserId;
+    const loserUserId = stats.loserUserId;
+    const winnerScore = stats.winnerScore;
+    const loserScore = stats.loserScore;
+    const date = stats.date;
+
+    // Here I am stuck; I need your help Siham
+    // Prisma needed here to record the stats in the
+    // database
   }
 }
 
