@@ -296,6 +296,10 @@ class GameEngine {
     this.events = [];
     this.player1.resetPlayer(this.fieldHeight / 2 - 50);
     this.player2.resetPlayer(this.fieldHeight / 2 - 50);
+    this.player1.setInput("MOVE_UP", false);
+    this.player1.setInput("MOVE_DOWN", false);
+    this.player2.setInput("MOVE_UP", false);
+    this.player2.setInput("MOVE_DOWN", false);
   }
 }
 module.exports = GameEngine;

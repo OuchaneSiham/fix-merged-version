@@ -18,18 +18,11 @@ export function GameWaiting({ sendReady, spectator, leaveRoom }) {
           <span className="relative z-10">PONG</span>
         </h1>
         <div
-          className="w-full max-w-md rounded-2xl
-                  bg-neutral-900
-                  p-8 shadow-2xl
-                  border border-neutral-700
-                  flex flex-col items-center gap-8"
+          className="w-full max-w-md bg-dark border border-neutral-700
+                      rounded-2xl p-8 shadow-2xl
+                      flex flex-col items-center gap-6"
         >
-          <div
-            className="flex items-center gap-3
-                    text-xl font-semibold tracking-wide
-                    text-cyan-400
-                    animate-pulse"
-          >
+          <div className="flex flex-col items-center gap-4 text-white text-xl font-semibold tracking-wide">
             <svg
               className="h-6 w-6 animate-spin"
               viewBox="0 0 24 24"
@@ -50,28 +43,22 @@ export function GameWaiting({ sendReady, spectator, leaveRoom }) {
               />
             </svg>
 
-            <span className="animate-[wiggle_0.4s_ease-in-out_infinite]">
-              Waiting for players…
+            <span className="animate-pulse text-white">
+              WAITING FOR PLAYERS…
             </span>
           </div>
           {!spectator && (
             <button
               onClick={sendReady}
               className="
-        w-full py-3 rounded-xl
-        bg-white text-black
-        hover:bg-gray-200
-        active:scale-95
-        transition-all duration-150
-        font-bold text-lg tracking-wider uppercase
-        shadow-lg
+        text-white my-2 h-15 w-75 px-4 py-2 rounded-lg bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 transition-colors duration-300 font-bold
       "
             >
-              Ready
+              READY
             </button>
           )}
           <button
-            className="mb-4 px-4 py-2 bg-red-600 hover:bg-red-700 rounded"
+            className="text-white my-2 h-15 w-75 px-4 py-2 rounded-lg bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 transition-colors duration-300 font-bold"
             onClick={leaveRoom}
           >
             Quit Room

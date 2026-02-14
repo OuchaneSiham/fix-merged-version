@@ -15,7 +15,7 @@ export default function PlayerWaiting() {
         <span className="relative z-10">PONG</span>
       </h1>
       <div
-        className="bg-neutral-900 border border-neutral-700
+        className="w-full max-w-md bg-dark border border-neutral-700
                       rounded-2xl p-8 shadow-2xl
                       flex flex-col items-center gap-6"
       >
@@ -39,7 +39,7 @@ export default function PlayerWaiting() {
           />
         </svg>
         <p className="text-xl font-semibold tracking-wide text-cyan-400 animate-pulse">
-          Waiting for opponent…
+          WAITING FOR OPPONENT…
         </p>
 
         <p className="text-sm text-neutral-400 text-center">
