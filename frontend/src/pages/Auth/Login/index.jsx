@@ -7,7 +7,7 @@
 import Logo from '../../../components/Auth/Logo';
 import LoginForm from './Form';
 import RedirectionLine from '../../../components/Auth/RedirectionLine'
-// import SocialButton from '../../components/Auth/SocialButton'
+import Google from '../../../components/Auth/Google'
 import PrivacyPolicy from '../../../components/UI/PrivacyPolicy'
 import Language from '../../../components/UI/Languages';
 export default function Login({ isAdmin = false }){
@@ -25,6 +25,7 @@ export default function Login({ isAdmin = false }){
                 <LoginForm isAdminLogin={isAdmin}/>
                 <RedirectionLine text="new Here ?" link="/" linkText="create new account"/>
                 {/* <SocialButton/> */}
+                <Google />
                 <PrivacyPolicy/>
             </div>
         </div>

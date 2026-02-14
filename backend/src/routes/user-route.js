@@ -467,30 +467,43 @@ catch(err) {
     reply.status(500).send({ error: "Internal Server Error" });
 }
     })    
-    fastify.delete("/friends/request/:id", {preHandler:[fastify.jwtAuthFun]}, async function (request, reply)
-    {
-        const rowId =  parseInt(request.params.id);
-        const receiverId = request.user.id;
-        try{
-            const checkFrienship = await  prisma.friendship.findUnique({
-                where:{
-                    id: rowId,
+        fastify.delete("/friends/request/:id", {preHandler:[fastify.jwtAuthFun]}, async function (request, reply) {
+            const rowId = parseInt(request.params.id);
+            const userId = request.user.id;
+
+            try {
+                const checkFrienship = await prisma.friendship.findUnique({
+                    where: { id: rowId }
+                });
+
+                if (!checkFrienship)
+                    return reply.status(404).send({ error: "Friend request not found" });
+
+                if (checkFrienship.addresseeId !== userId && checkFrienship.requesterId !== userId)
+                    return reply.status(403).send({ error: "You can't decline this request" });
+
+                await prisma.friendship.delete({
+                    where: { id: rowId }
+                });
+                const io = fastify.socketServer.getIO();
+                const otherId = (checkFrienship.requesterId === userId) 
+                    ? checkFrienship.addresseeId 
+                    : checkFrienship.requesterId;
+                    
+                const otherSocketId = fastify.socketServer.getSocketIdFromUserId(otherId);
+
+                if (otherSocketId) {
+                    io.to(otherSocketId).emit("friend:request_removed", { 
+                        friendshipId: rowId 
+                    });
                 }
-            })
-            if(!checkFrienship)
-                return reply.status(404).send({ error: "Friend request not found" });
-            if(checkFrienship.addresseeId !== receiverId && checkFrienship.requesterId !== receiverId)
-                return reply.status(403).send({ error: "u cant decline this request" });
-            const changeStatus = await prisma.friendship.delete({
-                where:{id:rowId}
-            });
-            reply.status(200).send({error: "the request is declined!"});
-        }
-catch(err) { 
-    console.error(err);
-    reply.status(500).send({ error: "Internal Server Error" });
-}
-    })
+                reply.status(200).send({ message: "The request was declined/removed!" });
+
+            } catch(err) { 
+                console.error(err);
+                reply.status(500).send({ error: "Internal Server Error" });
+            }
+        });
     fastify.post("/logout", {preHandler: [fastify.jwtAuthFun]}, async function (request, reply)
     {
         const userId = request.user.id;
