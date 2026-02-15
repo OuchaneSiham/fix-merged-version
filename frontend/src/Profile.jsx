@@ -296,290 +296,163 @@ useEffect(() => {
       };
     }, []);
   if (!userData) return <h1>Loading...</h1>;
-
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>Welcome, {userData.username}</h1>
-      <img
-        src={`https://localhost:8443${userData.avatar}`}
-        alt="Avatar"
-        style={{
-          width: "120px",
-          height: "120px",
-          borderRadius: "50%",
-          objectFit: "cover",
-        }}
-      />
+  <div style={{ padding: "20px" }}>
+    <h1>Welcome, {userData.username}</h1>
+    <img
+      src={`https://localhost:8443${userData.avatar}`}
+      alt="Avatar"
+      style={{
+        width: "120px",
+        height: "120px",
+        borderRadius: "50%",
+        objectFit: "cover",
+      }}
+    />
+    {isEdit ? (
+      <div style={{ border: "1px solid blue", padding: "15px", marginTop: "10px" }}>
+        <h3>Edit Profile</h3>
+        <input
+          type="text"
+          placeholder="Username"
+          value={updatedData.username}
+          onChange={(e) => setUpdatedData({ ...updatedData, username: e.target.value })}
+        />
+        <input
+          type="email"
+          placeholder="Email"
+          value={updatedData.email}
+          onChange={(e) => setUpdatedData({ ...updatedData, email: e.target.value })}
+        />
+        {!userData.isGoogleUser && (
+          <>
+            <input
+              type="password"
+              placeholder="Current Password"
+              value={updatedData.currentPassword || ""}
+              onChange={(e) => setUpdatedData({ ...updatedData, currentPassword: e.target.value })}
+            />
+            <input
+              type="password"
+              placeholder="New Password"
+              value={updatedData.password || ""}
+              onChange={(e) => setUpdatedData({ ...updatedData, password: e.target.value })}
+            />
+          </>
+        )}
+        <p>Change Avatar:</p>
+        <input type="file" accept="image/*" onChange={handleAvatarChange} />
+        <br /><br />
+        <button onClick={handleSave}>Save</button>
+        <button onClick={() => setEdit(false)}>Cancel</button>
+      </div>
+    ) : (
+      <div style={{ margin: "10px 0" }}>
+        <p>Email: {userData.email}</p>
+        <button onClick={() => setEdit(true)}>Edit Profile</button>
+      </div>
+    )}
 
-      {isEdit ? (
-        <div
-          style={{
-            border: "1px solid blue",
-            padding: "15px",
-            marginTop: "10px",
-          }}
-        >
-          <h3>Edit Profile</h3>
-          <input
-            type="text"
-            placeholder="Username"
-            value={updatedData.username}
-            onChange={(e) =>
-              setUpdatedData({ ...updatedData, username: e.target.value })
-            }
-          />
-          <input
-            type="email"
-            placeholder="Email"
-            value={updatedData.email}
-            onChange={(e) =>
-              setUpdatedData({ ...updatedData, email: e.target.value })
-            }
-          />
+    {/* ADMIN DASHBOARD LINK - Only visible if role is admin */}
+    {userData.role === "admin" && (
+      <div style={{ background: "#f0f0f0", padding: "15px", borderRadius: "8px", marginTop: "10px", border: "1px solid #ccc" }}>
+        <strong>🛡️ Admin Status Verified</strong>
+        <Link to="/admin">
+          <button style={{ marginLeft: "10px" }}>Go to Admin Dashboard</button>
+        </Link>
+      </div>
+    )}
 
-          {!userData.isGoogleUser && (
-            <>
-              <input
-                type="password"
-                placeholder="Current Password (required to change password)"
-                value={updatedData.currentPassword || ""}
-                onChange={(e) =>
-                  setUpdatedData({
-                    ...updatedData,
-                    currentPassword: e.target.value,
-                  })
-                }
-              />
-              <input
-                type="password"
-                placeholder="New Password (leave blank to keep current)"
-                value={updatedData.password || ""}
-                onChange={(e) =>
-                  setUpdatedData({ ...updatedData, password: e.target.value })
-                }
-              />
-            </>
-          )}
-
-          {userData.isGoogleUser && (
-            <p style={{ color: "#666", fontSize: "14px" }}>
-              🔒 You signed in with Google. Password management is not
-              available.
-            </p>
-          )}
-
-          <p>Change Avatar:</p>
-          <input type="file" accept="image/*" onChange={handleAvatarChange} />
-
-          <br />
-          <br />
-          <button onClick={handleSave}>Save</button>
-          <button onClick={() => setEdit(false)}>Cancel</button>
-        </div>
-      ) : (
-        <div style={{ margin: "10px 0" }}>
-          <p>Email: {userData.email}</p>
-          <button onClick={() => setEdit(true)}>Edit Profile</button>
-        </div>
-      )}
-      
-      {userData.role === "admin" && (
-        <div
-          style={{
-            background: "#f0f0f0",
-            padding: "10px",
-            borderRadius: "8px",
-            marginTop: "10px",
-          }}
-        >
-          <strong>Admin Status Verified</strong>
-          <Link to="/admin">
-            <button style={{ marginLeft: "10px" }}>
-              Go to Admin Dashboard
-            </button>
-          </Link>
-        </div>
-      )}
-      {matchData ? (
-        <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#f9f9f9', borderRadius: '8px', border: '1px solid #ddd' }}>
-          <h3>📊 Your Stats</h3>
-          <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
-            <div><strong>Win Rate:</strong> {matchData.stats.winRate}</div>
-            <div><strong>Wins:</strong> {matchData.stats.totalWins}</div>
-            <div><strong>Losses:</strong> {matchData.stats.totalLosses}</div>
-          </div>
-
-          <h3>📜 Match History</h3>
-          {matchData.history.length === 0 ? (
-            <p style={{ color: '#666' }}>No matches played yet.</p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {matchData.history.map((match) => (
-                <div key={match.id} style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  padding: '10px', 
-                  border: '1px solid #eee', 
-                  borderRadius: '5px',
-                  backgroundColor: match.result === 'WIN' ? '#e6fffa' : '#fff5f5' 
-                }}>
-                  <div>
-                    <span style={{ fontWeight: 'bold', color: match.result === 'WIN' ? 'green' : 'red' }}>
-                      {match.result}
-                    </span>
-                    <span style={{ margin: '0 10px' }}>vs {match.opponent.username}</span>
-                  </div>
-                  <div>
-                    <span style={{ fontWeight: 'bold' }}>{match.myScore} - {match.opponentScore}</span>
-                  </div>
-                </div>
-              ))}
+    {/* PLAYER ONLY SECTIONS - Hidden if the user is an admin */}
+    {userData.role !== "admin" && (
+      <>
+        {/* STATS & HISTORY */}
+        {matchData ? (
+          <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#f9f9f9', borderRadius: '8px', border: '1px solid #ddd' }}>
+            <h3>📊 Your Stats</h3>
+            <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
+              <div><strong>Win Rate:</strong> {matchData.stats.winRate}</div>
+              <div><strong>Wins:</strong> {matchData.stats.totalWins}</div>
+              <div><strong>Losses:</strong> {matchData.stats.totalLosses}</div>
             </div>
-          )}
-        </div>
-      ) : (
-        <p>Loading stats...</p>
-      )}
+            <h3>📜 Match History</h3>
+            {matchData.history.length === 0 ? (
+              <p style={{ color: '#666' }}>No matches played yet.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {matchData.history.map((match) => (
+                  <div key={match.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', border: '1px solid #eee', borderRadius: '5px', backgroundColor: match.result === 'WIN' ? '#e6fffa' : '#fff5f5' }}>
+                    <div>
+                      <span style={{ fontWeight: 'bold', color: match.result === 'WIN' ? 'green' : 'red' }}>{match.result}</span>
+                      <span style={{ margin: '0 10px' }}>vs {match.opponent.username}</span>
+                    </div>
+                    <div><span style={{ fontWeight: 'bold' }}>{match.myScore} - {match.opponentScore}</span></div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <p>Loading stats...</p>
+        )}
 
-      <hr />
-      <div
-        style={{
-          marginBottom: "20px",
-          padding: "15px",
-          border: "1px solid #ddd",
-          borderRadius: "8px",
-        }}
-      >
-        <h3>🔍 Search Users</h3>
-        <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
-          <input
-            type="text"
-            placeholder="Search users by username..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-            style={{ flex: 1, padding: "8px" }}
-          />
-          <button onClick={handleSearch}>Search</button>
+        <hr />
+        <div style={{ marginBottom: "20px", padding: "15px", border: "1px solid #ddd", borderRadius: "8px" }}>
+          <h3>🔍 Search Users</h3>
+          <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+            <input
+              type="text"
+              placeholder="Search users..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+              style={{ flex: 1, padding: "8px" }}
+            />
+            <button onClick={handleSearch}>Search</button>
+          </div>
+          {searchReqs.map((user) => (
+            <div key={user.id} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px", border: "1px solid #eee", marginBottom: "5px", borderRadius: "5px" }}>
+              <img src={`https://localhost:8443${user.avatar}`} width="30" height="30" style={{ borderRadius: "50%" }} alt="" />
+              <span style={{ flex: 1 }}>{user.username}</span>
+              <button onClick={() => handleSendRequest(user.id)}>Add Friend</button>
+            </div>
+          ))}
         </div>
-
-        {searchReqs.length > 0 && (
-          <div style={{ marginTop: "10px" }}>
-            <h4>Search Results:</h4>
-            {searchReqs.map((user) => (
-              <div
-                key={user.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "10px",
-                  padding: "8px",
-                  border: "1px solid #eee",
-                  marginBottom: "5px",
-                  borderRadius: "5px",
-                }}
-              >
-                <img
-                  src={`https://localhost:8443${user.avatar}`}
-                  width="30"
-                  height="30"
-                  style={{ borderRadius: "50%" }}
-                  alt=""
-                />
-                <span style={{ flex: 1 }}>{user.username}</span>
-                <button onClick={() => handleSendRequest(user.id)}>
-                  Add Friend
-                </button>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+          <div>
+            <h3>Friends ({friends.length})</h3>
+            {friends.map((fr) => (
+              <div key={fr.id} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+                <img src={`https://localhost:8443${fr.avatar}`} width="30" height="30" style={{ borderRadius: "50%" }} alt="" />
+                <span>{fr.username} {fr.isOnline ? "🟢" : "🔴"}</span>
+                <button onClick={() => startChatWith(fr.id)}>Chat</button>
               </div>
             ))}
           </div>
-        )}
-      </div>
-      <div
-        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}
-      >
-        <div>
-          <h3>Friends ({friends.length})</h3>
-          {friends.length === 0 && (
-            <p style={{ color: "#999" }}>
-              No friends yet. Search for users to add!
-            </p>
-          )}
-          {friends.map((fr) => (
-            <div
-              key={fr.id}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                marginBottom: "10px",
-              }}
-            >
-              <img
-                src={`https://localhost:8443${fr.avatar}`}
-                width="30"
-                height="30"
-                style={{ borderRadius: "50%" }}
-                alt=""
-              />
-              <span>
-                {fr.username} {fr.isOnline ? "🟢" : "🔴"}
-              </span>
-              <button onClick={() => startChatWith(fr.id)}>Chat</button>
-            </div>
-          ))}
+          <div>
+            <h3>Pending Requests ({pendingReqs.length})</h3>
+            {pendingReqs.map((req) => (
+              <div key={req.id} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+                <img src={`https://localhost:8443${req.requester.avatar}`} width="30" height="30" style={{ borderRadius: "50%" }} alt="" />
+                <span style={{ flex: 1 }}>{req.requester.username}</span>
+                <button onClick={() => handleAccept(req.id)}>Accept</button>
+              </div>
+            ))}
+          </div>
         </div>
-
-        <div>
-          <h3>Pending Requests ({pendingReqs.length})</h3>
-          {pendingReqs.length === 0 && (
-            <p style={{ color: "#999" }}>No pending requests</p>
-          )}
-          {pendingReqs.map((req) => (
-            <div
-              key={req.id}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                marginBottom: "10px",
-              }}
-            >
-              <img
-                src={`https://localhost:8443${req.requester.avatar}`}
-                width="30"
-                height="30"
-                style={{ borderRadius: "50%" }}
-                alt=""
-              />
-              <span style={{ flex: 1 }}>{req.requester.username}</span>
-              <button onClick={() => handleAccept(req.id)}>Accept</button>
-            </div>
-          ))}
-        </div>
-      </div>
-      <Link to="/game">
-        <button
-          style={{
-            marginTop: "20px",
-            backgroundColor: "#4CAF50",
-            color: "white",
-            padding: "10px 20px",
-            borderRadius: "5px",
-          }}
-        >
-          🎮 Play Pong
-        </button>
-      </Link>
-
-      <button
-        onClick={handleLogout}
-        style={{ marginTop: "30px", color: "red" }}
-      >
-        Logout
-      </button>
-    </div>
-  );
+        <Link to="/game">
+          <button style={{ marginTop: "20px", backgroundColor: "#4CAF50", color: "white", padding: "10px 20px", borderRadius: "5px" }}>
+            🎮 Play Pong
+          </button>
+        </Link>
+      </>
+    )}
+    <button onClick={handleLogout} style={{ marginTop: "30px", color: "red", display: 'block' }}>
+      Logout
+    </button>
+  </div>
+);
+ 
 }
 
 export default Profile;
