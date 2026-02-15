@@ -244,16 +244,15 @@ class GameEngine {
     this.state.winnerId = winnerId;
     this.disconnectedClient = null;
     if (this.isAIEnabled && !isAiRoom) this.disableAI();
-    if (!isAiRoom) {
+    if (!isAiRoom && !this.player1.isAi && !this.player2.isAi) {
       // First find players in roomClients
-      const players = [...roomClients.values()].filter((c) => {
-        c.getRole() === "PLAYER";
-      });
+      const players = [...roomClients.values()].filter((c) => 
+        c.getRole() === "PLAYER");
       const winnerClient = players.find((p) => p.getClientId() === winnerId);
       const loserClient =
         winnerClient.getClientId() === "player1" ? "player2" : "player1";
       this.matchStats.winnerUserId = winnerClient.getUserId();
-      this.matchStats.loserUserId = loserClient.getUserId();
+      this.matchStats.loserUserId = loserClient?.getUserId();
       this.matchStats.winnerScore = this.state.maxScore;
       this.matchStats.loserScore =
         winnerId === "player1"

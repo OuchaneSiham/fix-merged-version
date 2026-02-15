@@ -8,6 +8,7 @@ const { WebSocketServer } = require("ws");
 const GameClient = require("../game/GameClient");
 const dotenv = require("dotenv");
 const GameEngine = require("../game/GameEngine");
+const prisma = require('../config/db.js');
 
 dotenv.config();
 // import GameEngine from "../game/GameEngine.js";
@@ -443,7 +444,8 @@ class GameGateway {
         !engine.aiTimeout &&
         players.length === 1 &&
         !isAiRoom
-      ) {
+      )
+      {
         engine.aiTimeout = setTimeout(() => {
           const currentPlayers = [...clients.values()].filter(
             (c) => c.getRole() === "PLAYER" && c.getIsReady(),
@@ -468,7 +470,11 @@ class GameGateway {
       // haven't left the room yet
       if (engine.state.status === GameStatus.FINISHED && !resetScheduled) {
         resetScheduled = true;
-        this.recordMatchStats(engine.getMatchStats());
+        if(!isAiRoom && !engine.player1.isAi && !engine.player2.isAi)
+        {
+          this.recordMatchStats(engine.getMatchStats());
+        }
+        // this.recordMatchStats(engine.getMatchStats());
         setTimeout(() => {
           resetScheduled = false;
           if (!isAiRoom) {
@@ -529,20 +535,48 @@ class GameGateway {
     }
   }
   // Function to record match stats when a game ends
-  recordMatchStats(stats) {
+  async recordMatchStats(stats) {
     // stats will contain information like winner userId
     // loser winner userId, winner score, loser score,
     // roomId, matchId, date.
     // Variables to holds the stats to record in the database
 
-    const roomId = stats.roomId;
-    const matchId = stats.matchId;
-    const winnerUserId = stats.winnerUserId;
-    const loserUserId = stats.loserUserId;
+    // const roomId = stats.roomId;
+    // const matchId = stats.matchId;
+    // const winnerUserId = stats.winnerUserId;
+    // const loserUserId = stats.loserUserId;
+    // const winnerScore = stats.winnerScore;
+    // const loserScore = stats.loserScore;
+    // const date = stats.date;
+    const winnerId = parseInt(stats.winnerUserId);
+    const loserId = parseInt(stats.loserUserId);
     const winnerScore = stats.winnerScore;
     const loserScore = stats.loserScore;
-    const date = stats.date;
+    try{
+      await prisma.$transaction([
+        prisma.match.create({
+          data:{
+            winnerId:winnerId,
+            loserId:loserId,
+            winnerScore:winnerScore,
+            loserScore:loserScore
+          }
+        }),
+        prisma.user.update({
+          where: { id: winnerId },
+          data: { totalWins: { increment: 1 } }
+        }),
+        prisma.user.update({
+          where: { id: loserId },
+          data: { totalLosses: { increment: 1 } }
+        })
+      ])
+      console.log(`Match recorded for Users ${winnerId} and ${loserId}`);
 
+    }
+    catch (error) {
+      console.error("Database Error recording match:", error);
+    }
     // For each user increment the total games played 
     //  for the winner increment the total games won 
     // for the loser increment the total games lost 
