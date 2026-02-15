@@ -130,8 +130,8 @@ class GameEngine {
     const ball = this.ball.getState();
     const paddleCenter = paddle.y + paddle.height / 2;
     const tolerance = 20;
-    const aiSpeed = 0.8;
-    const reactionTime = 0.1;
+    const aiSpeed = 0.9;
+    const reactionTime = 0.09;
     const maxError = 25;
     this.aiTimer += deltaTime;
     if (this.aiTimer < reactionTime) {

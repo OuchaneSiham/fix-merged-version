@@ -409,7 +409,7 @@ class GameGateway {
       // client joins the room before the timeout is
       // executed to avoid deleting active rooms.
       if (totalClients > 0 && activeClients.length === 0) {
-        if (!this.deleteRoomTimeout.has(roomId)) {
+        if (!this.deleteRoomTimeouts.has(roomId)) {
           const timeout = setTimeout(
             () => {
               this.rooms.delete(roomId);
