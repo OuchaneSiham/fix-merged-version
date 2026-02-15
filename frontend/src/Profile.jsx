@@ -15,7 +15,25 @@ function Profile() {
   const [pendingReqs, setPendingReqs] = useState([]);
   const [friends, setFriends] = useState([]);
   const [error, setError] = useState(null);
+  const [matchData, setMatchData] = useState(null);
   const navigate = useNavigate();
+const fetchStates = async (userId) => {
+    const getToken = localStorage.getItem("token");
+    const targetId = userId || userData?.id;
+    if (!targetId) return;
+
+    try {
+      const resp = await fetch(`${API_BASE_URL}/users/${targetId}/stats`, {
+        headers: { Authorization: "Bearer " + getToken }
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        setMatchData(data);
+      }
+    } catch (error) {
+      console.error("Fetch Stats Error:", error);
+    }
+  };
   const fetchPending = async () => {
     const getToken = localStorage.getItem("token");
     try {
@@ -208,25 +226,23 @@ function Profile() {
     }
   };
 
-  useEffect(() => {
+useEffect(() => {
     const getToken = localStorage.getItem("token");
     if (!getToken) {
       navigate("/login");
       return;
     }
-
     const fetchProfile = async () => {
       try {
         const resp = await fetch(urlme, {
           headers: { Authorization: "Bearer " + getToken },
         });
-        console.log("Profile Fetch Status:", resp.status);
         if (resp.ok) {
           const data = await resp.json();
           setUserData(data);
           setUpdatedData({ ...data, password: "" });
+          fetchStates(data.id); 
         } else if (resp.status === 401) {
-          console.log("Token invalid, redirecting...");
           localStorage.removeItem("token");
           navigate("/login");
         }
@@ -235,9 +251,13 @@ function Profile() {
         setError("Network error.");
       }
     };
+
     fetchProfile();
     fetchPending();
     fetchFriends();
+    if (userData?.id) {
+      fetchStates(userData.id);
+    }
   }, [navigate]);
       useEffect(() => {
       const token = localStorage.getItem("token");
@@ -362,7 +382,7 @@ function Profile() {
           <button onClick={() => setEdit(true)}>Edit Profile</button>
         </div>
       )}
-
+      
       {userData.role === "admin" && (
         <div
           style={{
@@ -379,6 +399,46 @@ function Profile() {
             </button>
           </Link>
         </div>
+      )}
+      {matchData ? (
+        <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#f9f9f9', borderRadius: '8px', border: '1px solid #ddd' }}>
+          <h3>📊 Your Stats</h3>
+          <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
+            <div><strong>Win Rate:</strong> {matchData.stats.winRate}</div>
+            <div><strong>Wins:</strong> {matchData.stats.totalWins}</div>
+            <div><strong>Losses:</strong> {matchData.stats.totalLosses}</div>
+          </div>
+
+          <h3>📜 Match History</h3>
+          {matchData.history.length === 0 ? (
+            <p style={{ color: '#666' }}>No matches played yet.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {matchData.history.map((match) => (
+                <div key={match.id} style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  padding: '10px', 
+                  border: '1px solid #eee', 
+                  borderRadius: '5px',
+                  backgroundColor: match.result === 'WIN' ? '#e6fffa' : '#fff5f5' 
+                }}>
+                  <div>
+                    <span style={{ fontWeight: 'bold', color: match.result === 'WIN' ? 'green' : 'red' }}>
+                      {match.result}
+                    </span>
+                    <span style={{ margin: '0 10px' }}>vs {match.opponent.username}</span>
+                  </div>
+                  <div>
+                    <span style={{ fontWeight: 'bold' }}>{match.myScore} - {match.opponentScore}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <p>Loading stats...</p>
       )}
 
       <hr />

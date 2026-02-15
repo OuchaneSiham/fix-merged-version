@@ -76,6 +76,5 @@ model Match {
   loser        User     @relation("UserLosses", fields: [loserId], references: [id])
   winnerScore  Int
   loserScore   Int
-
   playedAt     DateTime @default(now())
 }

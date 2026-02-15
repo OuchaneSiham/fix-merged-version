@@ -664,6 +664,61 @@ catch(err) {
                 reply.status(500).send({ message: "Failed to update user", error: error.message });
             }
     })
-}
+    fastify.get("/:id/stats", { preHandler: [fastify.jwtAuthFun] }, async function (request, reply) {
+        const userid = parseInt(request.params.id);
+        
+        if (isNaN(userid)) return reply.status(400).send({ error: "Invalid User ID" });
 
+        try {
+            const isExist = await prisma.user.findUnique({
+                where: { id: userid },
+                select: {
+                    username: true,
+                    avatar: true,
+                    totalWins: true,
+                    totalLosses: true,
+                }
+            });
+
+            if (!isExist) return reply.status(404).send({ error: "User not found" });
+            const matches = await prisma.match.findMany({
+                where: {
+                    OR: [
+                        { winnerId: userid },
+                        { loserId: userid }
+                    ]
+                },
+                include: {
+                    winner: { select: { username: true, avatar: true } },
+                    loser: { select: { username: true, avatar: true } }
+                },
+                orderBy: { playedAt: 'desc' }
+            });
+            const totalGames = isExist.totalWins + isExist.totalLosses;
+            const winRate = totalGames > 0
+                ? ((isExist.totalWins / totalGames) * 100).toFixed(1) + "%"
+                : "0%";
+
+            const formattedHistory = matches.map(match => {
+                const iAmWinner = match.winnerId === userid;
+                return {
+                    id: match.id,
+                    playedAt: match.playedAt,
+                    result: iAmWinner ? "WIN" : "LOSS",
+                    myScore: iAmWinner ? match.winnerScore : match.loserScore,
+                    opponentScore: iAmWinner ? match.loserScore : match.winnerScore,
+                    opponent: iAmWinner ? match.loser : match.winner
+                };
+            });
+            reply.send({
+                stats: { ...isExist, totalGames, winRate },
+                history: formattedHistory
+            });
+        }
+        catch (error) {
+            console.error(error);
+            reply.status(500).send({ error: "Internal Server Error", message: error.message });
+        }
+    });
+}
 module.exports = routes;
