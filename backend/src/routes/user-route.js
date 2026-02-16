@@ -315,13 +315,17 @@ fastify.post("/google-auth", async function (request, reply) {
                     },
                     id:{
                         not: request.user.id,
-                    }
+                    },
+                    role: {
+                    not: "admin"
+                }
                 },
                 select:{
                     username: true,
                     id: true,
                     avatar: true,
                 }
+                
             })
             reply.status(200).send({data});
         }
@@ -347,6 +351,10 @@ fastify.post("/google-auth", async function (request, reply) {
         
         if (!targetUser) {
             return reply.status(404).send({error: "User not found"});
+        }
+        if (targetUser.role === "admin")
+        {
+            return reply.status(403).send({ error: "You cannot add an administrator as a friend" });
         }
         const existingFriendship = await prisma.friendship.findFirst({
             where: {
@@ -593,77 +601,117 @@ catch(err) {
     reply.status(500).send({ error: "Internal Server Error" });
 }
     })
-    fastify.patch("/admin/users/:id", {preHandler:[fastify.jwtAuthFun, fastify.verifyAdmin]}, async function  (request, reply) 
-    {
-        const adminId = request.user.id;
-        const targetId = parseInt(request.params.id);
-        const {username, email, role} = request.body;
-        const updateData ={};
-        const allowedRoles = ["user", "moderator", "admin"];
-        if (role && !allowedRoles.includes(role)) {
-            return reply.status(400).send({ message: "Invalid role. Allowed roles: user, moderator, admin" });
-        }
-                if(targetId === adminId)
-        {
-            return reply.status(400).send({message: "Admins cannot modify their own account through this endpoint"});
-        }
+    fastify.patch("/admin/users/:id", { preHandler: [fastify.jwtAuthFun, fastify.verifyAdmin] }, async function (request, reply) {
+    const adminId = request.user.id;
+    const targetId = parseInt(request.params.id);
+    const { username, email, role } = request.body;
+    const updateData = {};
+    const allowedRoles = ["user", "moderator"]; 
 
-        try{
-            if(username)
-            {
-            const  updu = await prisma.user.findUnique({
-            where:{username:username}
-            });
-            if( updu && updu.id != targetId)
-            {reply.status(400).send({error: "Username already taken"})
-            return;}
+    if (role && !allowedRoles.includes(role)) {
+        return reply.status(400).send({ 
+            message: "Invalid role. Admins can only set roles to: user, moderator" 
+        });
+    }
+
+    if (targetId === adminId) {
+        return reply.status(400).send({ message: "Admins cannot modify their own account through this endpoint" });
+    }
+
+    try {
+        if (username) {
+            const updu = await prisma.user.findUnique({ where: { username } });
+            if (updu && updu.id != targetId) {
+                return reply.status(400).send({ error: "Username already taken" });
+            }
             updateData.username = username;
-            } 
-            if(email)
-            {
-            const  upde = await prisma.user.findUnique({
-            where:{email:email}
-            });
-            if(upde && upde.id != targetId)
-            {reply.status(400).send({error: "email already taken"});
-            return;
+        }
+        if (email) {
+            const upde = await prisma.user.findUnique({ where: { email } });
+            if (upde && upde.id != targetId) {
+                return reply.status(400).send({ error: "Email already taken" });
             }
             updateData.email = email;
-            }
-            if(role) {
-                    if (role === "admin") {
-                        const adminCount = await prisma.user.count({
-                            where: { role: "admin" }
-                        });
-                        if (adminCount > 0 && !request.body.confirmAdminCreation) {
-                            return reply.status(400).send({
-                                error: "Creating additional admin accounts requires confirmation",
-                                requiresConfirmation: true
-                            });
-                        }
-                    }
-                    updateData.role = role;
-                }
-            const user = await prisma.user.update({
-                    where: { id: targetId },
-                    data: updateData,
-                    select: {
-                        id: true,
-                        username: true,
-                        email: true,
-                        role: true,
-                        avatar: true
         }
-                }
-            )
-            reply.status(200).send({
-                    message: "User updated successfully by Admin",
-                    user: user
-                });
-            } catch (error) {
-                reply.status(500).send({ message: "Failed to update user", error: error.message });
-            }
-    })
-}
+        if (role) {
+            updateData.role = role;
+        }
 
+        const user = await prisma.user.update({
+            where: { id: targetId },
+            data: updateData,
+            select: {
+                id: true,
+                username: true,
+                email: true,
+                role: true,
+                avatar: true
+            }
+        });
+
+        reply.status(200).send({
+            message: "User updated successfully by Admin",
+            user: user
+        });
+    } catch (error) {
+        reply.status(500).send({ message: "Failed to update user", error: error.message });
+    }
+});
+    fastify.get("/:id/stats", { preHandler: [fastify.jwtAuthFun] }, async function (request, reply) {
+        const userid = parseInt(request.params.id);
+        
+        if (isNaN(userid)) return reply.status(400).send({ error: "Invalid User ID" });
+
+        try {
+            const isExist = await prisma.user.findUnique({
+                where: { id: userid },
+                select: {
+                    username: true,
+                    avatar: true,
+                    totalWins: true,
+                    totalLosses: true,
+                }
+            });
+
+            if (!isExist) return reply.status(404).send({ error: "User not found" });
+            const matches = await prisma.match.findMany({
+                where: {
+                    OR: [
+                        { winnerId: userid },
+                        { loserId: userid }
+                    ]
+                },
+                include: {
+                    winner: { select: { username: true, avatar: true } },
+                    loser: { select: { username: true, avatar: true } }
+                },
+                orderBy: { playedAt: 'desc' }
+            });
+            const totalGames = isExist.totalWins + isExist.totalLosses;
+            const winRate = totalGames > 0
+                ? ((isExist.totalWins / totalGames) * 100).toFixed(1) + "%"
+                : "0%";
+
+            const formattedHistory = matches.map(match => {
+                const iAmWinner = match.winnerId === userid;
+                return {
+                    id: match.id,
+                    playedAt: match.playedAt,
+                    result: iAmWinner ? "WIN" : "LOSS",
+                    myScore: iAmWinner ? match.winnerScore : match.loserScore,
+                    opponentScore: iAmWinner ? match.loserScore : match.winnerScore,
+                    opponent: iAmWinner ? match.loser : match.winner
+                };
+            });
+            reply.send({
+                stats: { ...isExist, totalGames, winRate },
+                history: formattedHistory
+            });
+        }
+        catch (error) {
+            console.error(error);
+            reply.status(500).send({ error: "Internal Server Error", message: error.message });
+        }
+    });
+}
 module.exports = routes;

@@ -89,14 +89,13 @@ const fetchUsers = async () => {
             <Link to="/admin">
                 <button>Back to Dashboard</button>
             </Link>
-             {isLoading && <p>Loading users...</p>} {/* ✅ LOADING STATE */}
-        {error && <p style={{color: "red"}}>{error}</p>} {/* ✅ ERROR STATE */}
+             {isLoading && <p>Loading users...</p>}
+        {error && <p style={{color: "red"}}>{error}</p>}
             {!isLoading && !error && (
             <div>
                 <h2>All Users ({users.length})</h2>
                 {users.map(user => (
                     <div key={user.id} style={{border: "1px solid gray", margin: "10px", padding: "10px"}}>
-                        {/* <img src={user.avatar} width="50" alt={user.username} /> */}
                          <img 
                             src={`https://localhost:8443${user.avatar}`} 
                             width="50" 
@@ -129,43 +128,34 @@ function EditForm({ user, onClose }) {
     const [role, setRole] = useState(user.role);
     
     const handleSubmit = async () => {
-    const token = localStorage.getItem("token");
-    if (role === "admin" && user.role !== "admin") {
-        const confirmed = window.confirm(
-            "⚠️ WARNING: You are about to grant ADMIN privileges to this user. " +
-            "This will give them full control over all users and settings. " +
-            "Are you sure you want to continue?"
-        );
-        if (!confirmed) return;
-    }
-    
-    try {
-        const resp = await fetch(`${API_BASE_URL}/users/admin/users/${user.id}`, {
-            method: "PATCH",
-            headers: {
-                "Authorization": "Bearer " + token,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ 
-                username, 
-                email, 
-                role,
-                confirmAdminCreation: true 
-            })
-        });
+        const token = localStorage.getItem("token");
         
-        if (resp.ok) {
-            alert("User updated successfully!");
-            onClose();
-        } else {
-            const data = await resp.json();
-            alert("Failed: " + (data.error || data.message || "Error"));
+        try {
+            const resp = await fetch(`${API_BASE_URL}/users/admin/users/${user.id}`, {
+                method: "PATCH",
+                headers: {
+                    "Authorization": "Bearer " + token,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ 
+                    username, 
+                    email, 
+                    role
+                })
+            });
+            
+            if (resp.ok) {
+                alert("User updated successfully!");
+                onClose();
+            } else {
+                const data = await resp.json();
+                alert("Failed: " + (data.error || data.message || "Error"));
+            }
+        } catch(error) {
+            console.log("Error:", error);
+            alert("Error updating user");
         }
-    } catch(error) {
-        console.log("Error:", error);
-        alert("Error updating user");
     }
-}
     
     return (
         <div style={{
