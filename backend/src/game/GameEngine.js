@@ -246,15 +246,15 @@ class GameEngine {
     if (this.isAIEnabled && !isAiRoom) this.disableAI();
     if (!isAiRoom && !this.player1.isAi && !this.player2.isAi) {
       // First find players in roomClients
-      const players = [...roomClients.values()].filter(
+      const players = [...roomClients?.values()].filter(
         (c) => c.getRole() === "PLAYER",
       );
       const winnerClient = players.find((p) => p.getClientId() === winnerId);
       const loserClient =
-        winnerClient.getClientId() === "player1"
+        winnerClient?.getClientId() === "player1"
           ? players.find((p) => p.getClientId() === "player2")
           : players.find((p) => p.getClientId() === "player1");
-      this.matchStats.winnerUserId = winnerClient.getUserId();
+      this.matchStats.winnerUserId = winnerClient?.getUserId();
       this.matchStats.loserUserId = loserClient?.getUserId();
       this.matchStats.winnerScore = this.state.maxScore;
       this.matchStats.loserScore =
@@ -266,7 +266,8 @@ class GameEngine {
       this.matchStats.date = new Date().toISOString();
     }
   }
-  onPlayerDisconnected(playerId, roomClients) {
+  onPlayerDisconnected(playerId, roomClients, roomId) {
+    const isAiRoom = roomId.startsWith("ai-");
     if (this.state.status === GameStatus.WAITING) {
       return;
     }
@@ -296,7 +297,7 @@ class GameEngine {
         this.state.status !== GameStatus.FINISHED
       ) {
         const winnerId = playerId === "player1" ? "player2" : "player1";
-        this.endGame(winnerId);
+        this.endGame(winnerId, isAiRoom, roomClients, roomId);
       }
     }, 5000);
   }

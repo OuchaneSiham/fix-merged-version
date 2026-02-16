@@ -272,7 +272,7 @@ class GameGateway {
       client.setDisconnected(true);
       if (client.getRole() === "PLAYER") {
         engine.disconnectedClient = client;
-        engine.onPlayerDisconnected(client.getClientId(), room.clients);
+        engine.onPlayerDisconnected(client.getClientId(), room.clients, roomId);
       }
     });
   }
