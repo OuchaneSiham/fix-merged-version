@@ -1,9 +1,9 @@
+
 import axios from "axios";
 
 const API = axios.create({
   baseURL: "http://localhost:8281/api/v1",
 });
-
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
@@ -29,6 +29,7 @@ export const blockUser = async (targetId) => {
   const res = await API.post(`/chat/user/${targetId}/block`);
   return res.data;
 };
+
 export const unblockUser = async (targetId) => {
   const res = await API.post(`/chat/user/${targetId}/unblock`);
   return res.data;

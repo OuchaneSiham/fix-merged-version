@@ -24,7 +24,11 @@ const ChatPage = () => {
     selectedConv.user1.id === user.id ? selectedConv.user2 : selectedConv.user1
   );
 
-  const isBlocked = otherUser && blockedUsers.some(b => b.blockedUser.id === otherUser.id);
+  // const isBlocked = otherUser && blockedUsers.some(b => b.blockedUser.id === otherUser.id);
+  // blaty hado
+const iBlockedThem = otherUser && blockedUsers.some(b => b.blockedUser.id === otherUser.id);
+  const theyBlockedMe = selectedConv?.iAmBlocked; 
+  const isChatDisabled = iBlockedThem || theyBlockedMe;
 
   const fetchBlockedUsers = async () => {
     try {
@@ -96,7 +100,8 @@ useEffect(() => {
   }, [selectedConv]);
 
   const handleSend = async () => {
-    if (!input.trim() || !selectedConv || isBlocked) return;
+
+    if (!input.trim() || !selectedConv || isChatDisabled) return;
 
     const currentInput = input;
     setInput("");
@@ -108,7 +113,7 @@ useEffect(() => {
         return [...prev, msg];
       });
     } catch (err) {
-      console.error("Failed to send message:", err);
+      // console.error("Failed to send message:", err);
       setInput(currentInput);
       alert(err.response?.data?.error || "Message failed. You might be blocked.");
     }
@@ -155,9 +160,9 @@ useEffect(() => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '10px', borderBottom: '1px solid #eee' }}>
               <h3 style={{ margin: 0 }}>{otherUser?.username}</h3>
               <button 
-                onClick={() => handleBlockAction(otherUser.id, isBlocked ? "unblock" : "block")}
+                onClick={() => handleBlockAction(otherUser.id, iBlockedThem ? "unblock" : "block")}
                 style={{ 
-                  backgroundColor: isBlocked ? '#28a745' : '#dc3545', 
+                  backgroundColor: iBlockedThem ? '#28a745' : '#dc3545', 
                   color: 'white', 
                   border: 'none', 
                   padding: '5px 12px', 
@@ -165,7 +170,7 @@ useEffect(() => {
                   cursor: 'pointer' 
                 }}
               >
-                {isBlocked ? "Unblock User" : "Block User"}
+                {iBlockedThem ? "Unblock User" : "Block User"}
               </button>
             </div>
             <div className="messages" style={{ flex: 1, overflowY: 'auto', margin: '10px 0' }}>
@@ -189,21 +194,28 @@ useEffect(() => {
               ))}
             </div>
             <div className="input-area" style={{ display: 'flex', gap: '10px' }}>
-              <input 
-                value={input} 
-                onChange={(e) => setInput(e.target.value)} 
-                onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                disabled={isBlocked}
-                placeholder={isBlocked ? "You have blocked this user" : "Type a message..."} 
-                style={{ flex: 1, padding: '10px', borderRadius: '5px', border: '1px solid #ccc' }}
-              />
-              <button 
-                onClick={handleSend} 
-                disabled={isBlocked}
-                style={{ padding: '10px 20px', cursor: isBlocked ? 'not-allowed' : 'pointer' }}
-              >
-                Send
-              </button>
+              <input //hadyyyyyyy
+              value={input} 
+              onChange={(e) => setInput(e.target.value)} 
+              onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+              disabled={isChatDisabled}
+              placeholder={
+                iBlockedThem ? "You have blocked this user" : 
+                theyBlockedMe ? "You are blocked by this user" : "Type a message..."
+              } 
+              style={{ 
+                flex: 1, padding: '10px', borderRadius: '5px', border: '1px solid #ccc',
+                backgroundColor: isChatDisabled ? '#f0f0f0' : 'white'
+              }}
+            />
+            {/* //ohady */}
+          <button 
+              onClick={handleSend} 
+              disabled={isChatDisabled}
+              style={{ padding: '10px 20px', cursor: isChatDisabled ? 'not-allowed' : 'pointer' }}
+            >
+              Send
+            </button>
             </div>
           </>
         ) : (

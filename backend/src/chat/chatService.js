@@ -24,19 +24,8 @@ class ChatService {
 
     return conversation;
   }
-
+//hady
   async getOrCreateConversation(userId, otherUserId) {
-    const blockedByOther = await this.prisma.blockedUser.findFirst({
-      where: {
-        userId: otherUserId,
-        blockedUserId: userId
-      }
-    });
-
-    if (blockedByOther) {
-      throw new Error("You are blocked by this user");
-    }
-
     let conversation = await this.prisma.conversation.findFirst({
       where: {
         OR: [
@@ -117,14 +106,11 @@ class ChatService {
 
     return message;
   }
-
-  async getUserConversations(userId) {
-    return this.prisma.conversation.findMany({
+//hadyyyy
+async getUserConversations(userId) {
+    const conversations = await this.prisma.conversation.findMany({
       where: {
-        OR: [
-          { user1Id: userId },
-          { user2Id: userId }
-        ]
+        OR: [{ user1Id: userId }, { user2Id: userId }]
       },
       include: {
         user1: { select: { id: true, username: true } },
@@ -132,8 +118,23 @@ class ChatService {
       },
       orderBy: { id: "desc" }
     });
-  }
 
+    return Promise.all(conversations.map(async (conv) => {
+      const otherUserId = conv.user1Id === userId ? conv.user2Id : conv.user1Id;
+
+      const blockedMe = await this.prisma.blockedUser.findFirst({
+        where: {
+          userId: otherUserId,
+          blockedUserId: userId
+        }
+      });
+
+      return {
+        ...conv,
+        iAmBlocked: !!blockedMe
+      };
+    }));
+  }
   async blockUser(blockerId, blockedId) {
     const existing = await this.prisma.blockedUser.findFirst({
       where: {
