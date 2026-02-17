@@ -104,8 +104,7 @@ function Login() {
                         onChange={handlechange} 
                         id="username" 
                         name="username" 
-                        placeholder="enter your username" 
-                        className="w-full px-4 py-3 bg-[#1A1410] border border-[#2A2420] rounded-xl text-white placeholder-[#6B5D52] focus:outline-none focus:border-[#D4A574]"
+                        className="w-full px-4 py-3 bg-[#1A1410] border border-[#2A2420] rounded-xl text-white placeholder-[#6B5D52] hover:border-[#D4A574] focus:outline-none focus:border-[#D4A574]"
                         required
                     />
                 </div>
@@ -117,8 +116,7 @@ function Login() {
                         onChange={handlechange} 
                         id="password" 
                         name="password" 
-                        placeholder="enter your password" 
-                        className="w-full px-4 py-3 bg-[#1A1410] border border-[#2A2420] rounded-xl text-white placeholder-[#6B5D52] focus:outline-none focus:border-[#D4A574]"
+                        className="w-full px-4 py-3 bg-[#1A1410] border border-[#2A2420] rounded-xl text-white placeholder-[#6B5D52] hover:border-[#D4A574] focus:outline-none focus:border-[#D4A574]"
                         required
                     />
                 </div>

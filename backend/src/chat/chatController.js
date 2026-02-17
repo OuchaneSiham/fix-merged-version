@@ -90,6 +90,18 @@ function chatController(chatService) {
         return reply.status(500).send({ error: err.message });
       }
     });
+    
+      fastify.get("/conversation/:id/block-status", async (request, reply) => {
+        try {
+          const userId = request.user.id;
+          const conversationId = Number(request.params.id);
+          
+          const status = await chatService.getBlockStatus(userId, conversationId);
+          return reply.send(status);
+        } catch (err) {
+          return reply.status(400).send({ error: err.message });
+        }
+      });
   };
 }
 

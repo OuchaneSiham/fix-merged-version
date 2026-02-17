@@ -14,7 +14,7 @@ export default function Login({ isAdmin = false }){
 
 
     return(
-        <div className='relative min-h-screen bg-[#111115] flex
+        <div className='relative min-h-screen bg-[linear-gradient(to_bottom,#162D2A,#2F3A32,#3E2411)] flex
                         justify-center items-center ' >
             <Language/>
             <div className=' 
@@ -23,7 +23,7 @@ export default function Login({ isAdmin = false }){
                             rounded-4xl border-1 border-[#3D3229] '>
                 <Logo/>
                 <LoginForm isAdminLogin={isAdmin}/>
-                <RedirectionLine text="new Here ?" link="/" linkText="create new account"/>
+                <RedirectionLine text="new Here ?" link="/signUp" linkText="create new account"/>
                 {/* <SocialButton/> */}
                 <Google />
                 <PrivacyPolicy/>

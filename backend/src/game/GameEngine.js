@@ -297,9 +297,14 @@ class GameEngine {
         this.state.status !== GameStatus.FINISHED
       ) {
         const winnerId = playerId === "player1" ? "player2" : "player1";
+        if (winnerId === "player1") {
+          this.player1.score = 10;
+        } else {
+          this.player2.score = 10;
+        }
         this.endGame(winnerId, isAiRoom, roomClients, roomId);
       }
-    }, 5000);
+    }, 30000);
   }
   startGame() {
     this.state.status = GameStatus.RUNNING;

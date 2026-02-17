@@ -24,8 +24,19 @@ class ChatService {
 
     return conversation;
   }
-//hady
+
   async getOrCreateConversation(userId, otherUserId) {
+    // const blockedByOther = await this.prisma.blockedUser.findFirst({
+    //   where: {
+    //     userId: otherUserId,
+    //     blockedUserId: userId
+    //   }
+    // });
+
+    // if (blockedByOther) {
+    //   throw new Error("You are blocked by this user");
+    // }
+
     let conversation = await this.prisma.conversation.findFirst({
       where: {
         OR: [
@@ -89,7 +100,12 @@ class ChatService {
     });
 
     if (recipientBlockedSender) {
-      throw new Error("Message failed. You are blocked by this user.");
+      // throw new Error("Message failed. You are blocked by this user.");
+          return {
+      blocked: true,
+      message: "You are blocked by this user.",
+      canSend: false
+    };
     }
     const message = await this.prisma.message.create({
       data: {
@@ -106,11 +122,14 @@ class ChatService {
 
     return message;
   }
-//hadyyyy
-async getUserConversations(userId) {
-    const conversations = await this.prisma.conversation.findMany({
+
+  async getUserConversations(userId) {
+    return this.prisma.conversation.findMany({
       where: {
-        OR: [{ user1Id: userId }, { user2Id: userId }]
+        OR: [
+          { user1Id: userId },
+          { user2Id: userId }
+        ]
       },
       include: {
         user1: { select: { id: true, username: true } },
@@ -118,23 +137,8 @@ async getUserConversations(userId) {
       },
       orderBy: { id: "desc" }
     });
-
-    return Promise.all(conversations.map(async (conv) => {
-      const otherUserId = conv.user1Id === userId ? conv.user2Id : conv.user1Id;
-
-      const blockedMe = await this.prisma.blockedUser.findFirst({
-        where: {
-          userId: otherUserId,
-          blockedUserId: userId
-        }
-      });
-
-      return {
-        ...conv,
-        iAmBlocked: !!blockedMe
-      };
-    }));
   }
+
   async blockUser(blockerId, blockedId) {
     const existing = await this.prisma.blockedUser.findFirst({
       where: {
@@ -142,21 +146,27 @@ async getUserConversations(userId) {
         blockedUserId: blockedId
       }
     });
-
     if (existing) return existing;
-
-    return this.prisma.blockedUser.create({
+    const block = await this.prisma.blockedUser.create({
       data: { userId: blockerId, blockedUserId: blockedId }
     });
+    if (this.chatGateway) {
+      this.chatGateway.emitBlockEvent(blockerId, blockedId, 'blocked');
+    }
+    return block;
   }
 
-  async unblockUser(blockerId, blockedId) {
-    return this.prisma.blockedUser.deleteMany({
+ async unblockUser(blockerId, blockedId) {
+    const result = await this.prisma.blockedUser.deleteMany({
       where: {
         userId: blockerId,
         blockedUserId: blockedId
       }
     });
+    if (this.chatGateway) {
+      this.chatGateway.emitBlockEvent(blockerId, blockedId, 'unblocked');
+    }
+    return result;
   }
 
   async getBlockedUsers(userId) {
@@ -167,6 +177,34 @@ async getUserConversations(userId) {
       }
     });
   }
+  //siham
+      async getBlockStatus(userId, conversationId) {
+        const conversation = await this.prisma.conversation.findUnique({
+          where: { id: conversationId }
+        });
+        
+        if (!conversation) throw new Error("Conversation not found");
+        
+        const recipientId = conversation.user1Id === userId ? conversation.user2Id : conversation.user1Id;
+        const iBlockedThem = await this.prisma.blockedUser.findFirst({
+          where: {
+            userId: userId,
+            blockedUserId: recipientId
+          }
+        });
+            const theyBlockedMe = await this.prisma.blockedUser.findFirst({
+              where: {
+                userId: recipientId,
+                blockedUserId: userId
+              }
+            });
+            
+            return {
+              iBlockedThem: !!iBlockedThem,
+              theyBlockedMe: !!theyBlockedMe,
+              canSend: !iBlockedThem && !theyBlockedMe
+            };
+          }
 }
 
 module.exports = ChatService;

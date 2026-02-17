@@ -21,8 +21,7 @@ export default function PasswordInput({htmlFor ,text, id, value, onChange})
             <div className='relative'>
                 <input  id={id}
                         type={passwordType}
-                        className=' block mt-1 w-full bg-[#2A2A2A] text-white text-[16px] px-3 py-1 font-light border:none  rounded-lg hover:border-1 hover:border-[#D4A574]
-                                ring-offset-2 focus:outline-none focus:border-2 focus:border-white-500'
+                        className='w-full px-4 py-3 bg-[#1A1410] border border-[#2A2420] rounded-xl text-white placeholder-[#6B5D52] hover:border-[#D4A574] focus:outline-none focus:border-[#D4A574]'
                         value={value}
                         onChange={onChange}
                         required

@@ -1,14 +1,20 @@
-
 import axios from "axios";
 
 const API = axios.create({
   baseURL: "http://localhost:8281/api/v1",
 });
+
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
+
+
+export const getBlockStatus = async (convId) => {
+  const res = await API.get(`/chat/conversation/${convId}/block-status`);
+  return res.data;
+};
 
 export const getConversations = async () => {
   const res = await API.get("/chat/conversation");
@@ -29,7 +35,6 @@ export const blockUser = async (targetId) => {
   const res = await API.post(`/chat/user/${targetId}/block`);
   return res.data;
 };
-
 export const unblockUser = async (targetId) => {
   const res = await API.post(`/chat/user/${targetId}/unblock`);
   return res.data;

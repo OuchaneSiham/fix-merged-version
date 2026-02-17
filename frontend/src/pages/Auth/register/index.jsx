@@ -19,7 +19,6 @@ export default function SignUp() {
     const handlechange = (event) => {
         setFormData({...formData, [event.target.id]: event.target.value})
     }
-    console.log("hellooooooo");
     const handleSubmit = async (event) => {
         event.preventDefault();
         try {
@@ -53,22 +52,23 @@ export default function SignUp() {
     
     return (
         <>
-            <div className='relative min-h-screen bg-[#111115] flex justify-center items-center'>
+            <div className='relative min-h-screen bg-[linear-gradient(to_bottom,#162D2A,#2F3A32,#3E2411)] flex justify-center items-center'>
                 <Language/>
-                <div className="max-w-md w-full bg-[#18181C]/100 space-y-9 px-4 py-2 rounded-4xl border-1 border-[#3D3229]">
+                <div className="max-w-md w-full bg-[#1F1A1F]  space-y-9 px-4 py-2 rounded-4xl border-1 border-[#3D3229]">
                     <Logo />
                     <div className='text-[#E5E5E5]'>
                         <p className='text-[24px] text-white font-medium text-center mb-3'>
                             Sign Up to LEETPONG
                         </p>
 
-                        <div className='flex flex-col gap-y-4 mt-5 py-5 rounded-2xl border-1 border-[#2A2420] max-w-md mx-3 px-6 py-0'>
+                        <div className='grid gap-y-4 rounded-2xl border-1 border-[#2A2420] mt-5 max-w-md mx-3 px-4 py-4 py-5'>
                             <Input 
                                 htmlFor="username"
                                 text='username'
                                 id='username'
                                 type='text'
                                 onChange={handlechange}
+                                className="w-full px-4 py-3 bg-[#1A1410] border border-[#2A2420] rounded-xl text-white placeholder-[#6B5D52] hover:border-[#D4A574] focus:outline-none focus:border-[#D4A574]"
                             />
                             <Input 
                                 htmlFor="email"
@@ -76,12 +76,14 @@ export default function SignUp() {
                                 id="email"
                                 type="email"
                                 onChange={handlechange}
+                                className="w-full px-4 py-3 bg-[#1A1410] border border-[#2A2420] rounded-xl text-white placeholder-[#6B5D52] hover:border-[#D4A574] focus:outline-none focus:border-[#D4A574]"
                             />
                             <PasswordInput
                                 htmlFor='password'
                                 text='password'
                                 id='password'
                                 onChange={handlechange}
+                                className="w-full px-4 py-3 bg-[#1A1410] border border-[#2A2420] rounded-xl text-white placeholder-[#6B5D52] hover:border-[#D4A574] focus:outline-none focus:border-[#D4A574]"
                             />
                             <button 
                                 disabled={!isFormValid}

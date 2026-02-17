@@ -110,12 +110,30 @@ class GameGateway {
     //   (c) => c.getRole() === "PLAYER" && !c.isDisconnected(),
     // );
     if (existingClient && playersDisconnected.length > 0) {
-      playersDisconnected.forEach((p) => {
-        if (p.getClientId() !== existingClient.getClientId()) {
-          p.setRole("SPECTATOR");
-          p.setClientId(null);
-        }
-      });
+      if (playersDisconnected.length === 2) {
+        playersDisconnected.forEach((p) => {
+          if (p.getClientId() !== existingClient.getClientId()) {
+            p.setRole("SPECTATOR");
+            p.setClientId(null);
+          }
+          if (p.getClientId() === existingClient.getClientId()) {
+            existingClient.setRole("PLAYER");
+            existingClient.setClientId(p.getClientId());
+          }
+        });
+      }
+      if (playersDisconnected.length === 1) {
+         playersDisconnected.forEach((p) => {
+          if (p.getClientId() !== existingClient.getClientId()) {
+            p.setRole("SPECTATOR");
+            p.setClientId(null);
+          }
+          if (p.getClientId() === existingClient.getClientId()) {
+            existingClient.setRole("PLAYER");
+            existingClient.setClientId(p.getClientId());
+          }
+        });
+      }
     }
     // if (playersDisconnected.length === 1) {
     //   if (
@@ -444,8 +462,7 @@ class GameGateway {
         !engine.aiTimeout &&
         players.length === 1 &&
         !isAiRoom
-      )
-      {
+      ) {
         engine.aiTimeout = setTimeout(() => {
           const currentPlayers = [...clients.values()].filter(
             (c) => c.getRole() === "PLAYER" && c.getIsReady(),
@@ -470,8 +487,7 @@ class GameGateway {
       // haven't left the room yet
       if (engine.state.status === GameStatus.FINISHED && !resetScheduled) {
         resetScheduled = true;
-        if(!isAiRoom && !engine.player1.isAi && !engine.player2.isAi)
-        {
+        if (!isAiRoom && !engine.player1.isAi && !engine.player2.isAi) {
           this.recordMatchStats(engine.getMatchStats());
         }
         // this.recordMatchStats(engine.getMatchStats());
@@ -552,14 +568,14 @@ class GameGateway {
     const loserId = parseInt(stats.loserUserId);
     const winnerScore = stats.winnerScore;
     const loserScore = stats.loserScore;
-    try{
+    try {
       await prisma.$transaction([
         prisma.match.create({
-          data:{
-            winnerId:winnerId,
-            loserId:loserId,
-            winnerScore:winnerScore,
-            loserScore:loserScore
+          data: {
+            winnerId: winnerId,
+            loserId: loserId,
+            winnerScore: winnerScore,
+            loserScore: loserScore
           }
         }),
         prisma.user.update({

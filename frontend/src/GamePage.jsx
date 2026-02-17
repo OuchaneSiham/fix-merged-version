@@ -9,8 +9,11 @@ import GamePaused from "./components/game/GamePaused";
 import GameSpectator from "./components/game/GameSpectator";
 import useGameState from "./hooks/game/useGameState";
 import { useGameSocket } from "./hooks/game/useGameSocket";
+import { useNavigate } from "react-router-dom";
+
 // Beta#alpha#1337
 function GamePage() {
+  const navigate = useNavigate();
   const [roomId, setRoomId] = useState(() => {
     return sessionStorage.getItem("roomId") || null;
   });
@@ -54,7 +57,9 @@ function GamePage() {
       );
     }
     return (
+
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-900 text-white">
+
         <h1 className="mb-6 text-5xl font-extrabold tracking-widest uppercase">
           Pong
         </h1>

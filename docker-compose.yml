@@ -32,6 +32,7 @@ services:
       
   nginx:
     image: nginx:alpine
+
     container_name: nginx_proxy
     ports:
       - "8443:8443"
